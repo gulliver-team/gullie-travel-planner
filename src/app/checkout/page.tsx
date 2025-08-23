@@ -85,9 +85,9 @@ export default function CheckoutPage() {
           <p className="text-gray-400 mb-8">Please sign in to continue with your subscription</p>
           <Link href="/">
             <motion.button
-              whileHover={{ scale: 1.05, x: 2, y: -2 }}
-              whileTap={{ scale: 0.95, backgroundColor: "#00ffff", color: "#000000" }}
-              className="px-6 py-3 border border-electric text-electric hover:bg-electric/10 transition-all"
+              whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
+              whileTap={{ scale: 0.95, backgroundColor: "#00ffff", color: "#000000", transition: { duration: 0 } }}
+              className="px-6 py-3 border border-electric text-electric"
             >
               Go to Home
             </motion.button>
@@ -139,9 +139,9 @@ export default function CheckoutPage() {
             <p className="text-gray-400 text-sm mb-6">Cancel anytime, no hidden fees</p>
             
             <motion.button
-              whileHover={{ scale: 1.05, x: 2, y: -2 }}
-              whileTap={{ scale: 0.95, backgroundColor: "#00ffff", color: "#000000" }}
-              className="w-full px-6 py-3 border border-electric text-electric hover:bg-electric/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
+              whileTap={{ scale: 0.95, backgroundColor: "#00ffff", color: "#000000", transition: { duration: 0 } }}
+              className="w-full px-6 py-3 border border-electric text-electric disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleCheckout}
               disabled={initiatingCheckout}
             >

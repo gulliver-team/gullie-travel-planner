@@ -57,13 +57,14 @@ export function Navigation() {
               <>
                 <Link href="/account">
                   <motion.button
-                    whileHover={{ scale: 1.05, x: 2, y: -2 }}
+                    whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
                     whileTap={{
                       scale: 0.95,
                       backgroundColor: "#00ffff",
                       color: "#000000",
+                      transition: { duration: 0 }
                     }}
-                    className="px-4 py-2 border border-electric text-electric hover:bg-electric/10 transition-all"
+                    className="px-4 py-2 border border-electric text-electric"
                   >
                     Account
                   </motion.button>
@@ -71,13 +72,14 @@ export function Navigation() {
 
                 <Link href="/billing">
                   <motion.button
-                    whileHover={{ scale: 1.05, x: 2, y: -2 }}
+                    whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
                     whileTap={{
                       scale: 0.95,
                       backgroundColor: "#00ffff",
                       color: "#000000",
+                      transition: { duration: 0 }
                     }}
-                    className="px-4 py-2 border border-electric text-electric hover:bg-electric/10 transition-all"
+                    className="px-4 py-2 border border-electric text-electric"
                   >
                     Billing
                   </motion.button>
@@ -91,13 +93,14 @@ export function Navigation() {
                   <form action={signOutAction}>
                     <motion.button
                       type="submit"
-                      whileHover={{ scale: 1.05, x: 2, y: -2 }}
+                      whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
                       whileTap={{
                         scale: 0.95,
                         backgroundColor: "#ff0000",
                         color: "#ffffff",
+                        transition: { duration: 0 }
                       }}
-                      className="px-4 py-2 border border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
+                      className="px-4 py-2 border border-red-500 text-red-500"
                     >
                       Sign Out
                     </motion.button>
@@ -107,13 +110,14 @@ export function Navigation() {
             ) : (
               <Link href={signInUrl}>
                 <motion.button
-                  whileHover={{ scale: 1.05, x: 2, y: -2 }}
+                  whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
                   whileTap={{
                     scale: 0.95,
                     backgroundColor: "#00ffff",
                     color: "#000000",
+                    transition: { duration: 0 }
                   }}
-                  className="px-6 py-2 border border-electric text-electric hover:bg-electric/10 transition-all"
+                  className="px-6 py-2 border border-electric text-electric"
                 >
                   Sign In
                 </motion.button>

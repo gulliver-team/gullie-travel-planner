@@ -9,9 +9,12 @@
 }
 
 * {
+  box-sizing: border-box;
+}
+
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 html,
@@ -24,19 +27,8 @@ body {
 
 button {
   cursor: pointer;
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
   transform-style: preserve-3d;
   border-radius: 0;
-}
-
-button:hover {
-  transform: scale(1.05) translateZ(0);
-}
-
-button:active {
-  background-color: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
 }
 
 input,
@@ -143,4 +135,39 @@ textarea:focus {
   .container {
     max-width: 1536px;
   }
+}
+
+/* Text selection styling - neon green background with black text */
+::selection {
+  background-color: #00ff00;
+  color: #000000;
+}
+
+::-moz-selection {
+  background-color: #00ff00;
+  color: #000000;
+}
+
+/* Apply to all elements */
+*::selection {
+  background-color: #00ff00;
+  color: #000000;
+}
+
+*::-moz-selection {
+  background-color: #00ff00;
+  color: #000000;
+}
+
+/* Ensure it works for input and textarea elements */
+input::selection,
+textarea::selection {
+  background-color: #00ff00;
+  color: #000000;
+}
+
+input::-moz-selection,
+textarea::-moz-selection {
+  background-color: #00ff00;
+  color: #000000;
 }

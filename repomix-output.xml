@@ -12709,7 +12709,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID || "c66ea195-003c-44b5-b34a-ad16c02408e8",
+          productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID,
           customerId: user.id,
           customerEmail: user.email,
           customerName: user.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user.email,
@@ -13720,7 +13720,7 @@ export function LandingHero({
               />
             </h3>
             <p className="text-sm text-gray-400">
-              $990/month until your visa is secured, first month free
+              $990/month until your relocation is completed, first month free
             </p>
           </div>
         </div>

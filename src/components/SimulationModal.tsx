@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import DecryptedText from "./DecryptedText";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface SimulationModalProps {
   isOpen: boolean;
@@ -179,7 +180,7 @@ export function SimulationModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
@@ -452,11 +453,13 @@ function ScenarioCard({
   isExpanded,
   onToggleExpand,
 }: ScenarioCardProps) {
+  const showInitialAnimation = !result;
+  
   return (
     <motion.div
       className="bg-black border border-green-500/30 p-4 relative overflow-hidden"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={showInitialAnimation ? { opacity: 0, y: 20 } : false}
+      animate={showInitialAnimation ? { opacity: 1, y: 0 } : false}
       transition={{ duration: 0.3 }}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
@@ -466,7 +469,7 @@ function ScenarioCard({
           <h3 className="text-sm font-bold text-green-500 uppercase tracking-wider">
             {scenario.label}
           </h3>
-          {timeline && (
+          {result && (
             <button
               onClick={onToggleExpand}
               className="text-gray-500 hover:text-green-500 transition-colors transform hover:scale-110"
@@ -488,7 +491,7 @@ function ScenarioCard({
           )}
         </div>
 
-        <div className="min-h-[200px] max-h-[400px] overflow-y-auto">
+        <div className={`${isExpanded ? "" : "min-h-[100px] max-h-[300px]"} overflow-y-auto transition-all duration-300`}>
           {isLoading ? (
             <div className="text-gray-500 animate-pulse">
               <div className="flex items-center gap-2 mb-2">
@@ -523,45 +526,74 @@ function ScenarioCard({
                 </div>
               )}
 
-              <div className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
-                {result.length > 500 ? (
-                  <>
-                    <DecryptedText
-                      text={result.slice(0, 500)}
-                      speed={10}
-                      maxIterations={5}
-                      sequential={true}
-                      animateOn="view"
-                      className="text-green-500"
-                      encryptedClassName="text-gray-600"
-                    />
-                    <span className="text-green-500">{result.slice(500)}</span>
-                  </>
-                ) : (
-                  <DecryptedText
-                    text={result}
-                    speed={10}
-                    maxIterations={5}
-                    sequential={true}
-                    animateOn="view"
-                    className="text-green-500"
-                    encryptedClassName="text-gray-600"
-                  />
-                )}
-              </div>
+              {!isExpanded && (
+                <div className="text-sm text-gray-300 font-mono">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => <h1 className="text-lg font-bold text-green-500 mb-2 mt-4">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-md font-bold text-green-500 mb-2 mt-3">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-sm font-bold text-green-500 mb-1 mt-2">{children}</h3>,
+                      p: ({ children }) => <p className="text-gray-300 mb-2">{children}</p>,
+                      ul: ({ children }) => <ul className="list-disc list-inside mb-2 text-gray-300">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal list-inside mb-2 text-gray-300">{children}</ol>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>,
+                      code: ({ children }) => <code className="bg-green-500/10 text-green-400 px-1 py-0.5">{children}</code>,
+                      pre: ({ children }) => <pre className="bg-green-500/10 text-green-400 p-2 mb-2 overflow-x-auto">{children}</pre>,
+                      blockquote: ({ children }) => <blockquote className="border-l-2 border-green-500 pl-3 text-gray-400 italic mb-2">{children}</blockquote>,
+                      strong: ({ children }) => <strong className="font-bold text-green-400">{children}</strong>,
+                      em: ({ children }) => <em className="italic text-gray-300">{children}</em>,
+                      hr: () => <hr className="border-green-500/30 my-4" />,
+                      a: ({ href, children }) => <a href={href} className="text-green-400 underline hover:text-green-300" target="_blank" rel="noopener noreferrer">{children}</a>
+                    }}
+                  >
+                    {result.slice(0, 800) + (result.length > 800 ? "..." : "")}
+                  </ReactMarkdown>
+                  {result.length > 800 && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      Click expand to view full content ({Math.round(result.length / 1000)}k characters)
+                    </div>
+                  )}
+                </div>
+              )}
 
               <AnimatePresence>
-                {isExpanded && timeline?.phases && (
+                {isExpanded && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="border-t border-green-500/20 pt-4 mt-4"
+                    className="mt-4"
                   >
-                    <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">
-                      Timeline Breakdown
-                    </h4>
-                    <div className="space-y-3">
+                    <div className="text-sm text-gray-300 font-mono mb-4">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({ children }) => <h1 className="text-lg font-bold text-green-500 mb-2 mt-4">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-md font-bold text-green-500 mb-2 mt-3">{children}</h2>,
+                          h3: ({ children }) => <h3 className="text-sm font-bold text-green-500 mb-1 mt-2">{children}</h3>,
+                          p: ({ children }) => <p className="text-gray-300 mb-2">{children}</p>,
+                          ul: ({ children }) => <ul className="list-disc list-inside mb-2 text-gray-300">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal list-inside mb-2 text-gray-300">{children}</ol>,
+                          li: ({ children }) => <li className="mb-1">{children}</li>,
+                          code: ({ children }) => <code className="bg-green-500/10 text-green-400 px-1 py-0.5">{children}</code>,
+                          pre: ({ children }) => <pre className="bg-green-500/10 text-green-400 p-2 mb-2 overflow-x-auto">{children}</pre>,
+                          blockquote: ({ children }) => <blockquote className="border-l-2 border-green-500 pl-3 text-gray-400 italic mb-2">{children}</blockquote>,
+                          strong: ({ children }) => <strong className="font-bold text-green-400">{children}</strong>,
+                          em: ({ children }) => <em className="italic text-gray-300">{children}</em>,
+                          hr: () => <hr className="border-green-500/30 my-4" />,
+                          a: ({ href, children }) => <a href={href} className="text-green-400 underline hover:text-green-300" target="_blank" rel="noopener noreferrer">{children}</a>
+                        }}
+                      >
+                        {result}
+                      </ReactMarkdown>
+                    </div>
+                    {timeline?.phases && (
+                      <div className="border-t border-green-500/20 pt-4">
+                        <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+                          Timeline Breakdown
+                        </h4>
+                        <div className="space-y-3">
                       {timeline.phases.map((phase, i) => (
                         <div
                           key={i}
@@ -623,7 +655,9 @@ function ScenarioCard({
                           )}
                         </div>
                       ))}
-                    </div>
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -1,5 +1,11 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import {
+  EmailCaptureInputSchema,
+  EmailCaptureOutputSchema,
+  type EmailCaptureInput,
+  type EmailCaptureOutput,
+} from "../schemas/zod_schemas";
 
 export const captureContactInfo = internalMutation({
   args: {
@@ -7,8 +13,12 @@ export const captureContactInfo = internalMutation({
     phone: v.optional(v.string()),
     name: v.string(),
   },
-  handler: async (ctx, args) => {
-    const { email, phone, name } = args;
+  handler: async (ctx, args): Promise<EmailCaptureOutput> => {
+    // Validate input using Zod schema
+    const validatedInput: EmailCaptureInput =
+      EmailCaptureInputSchema.parse(args);
+
+    const { email, phone, name } = validatedInput;
 
     // Check if user already exists
     const existingUser = await ctx.db

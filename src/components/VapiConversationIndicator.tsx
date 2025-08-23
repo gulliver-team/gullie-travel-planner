@@ -28,7 +28,7 @@ export function VapiConversationIndicator({ showAlways = false }: VapiConversati
     <div className="fixed bottom-8 right-8 z-50">
       <div className="relative">
         {/* Main conversation card */}
-        <div className="bg-black border border-green-500/30 p-6 min-w-[320px] max-w-[400px]">
+        <div className="bg-black border border-green-500/30 p-6 w-[400px] h-[420px] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export function VapiConversationIndicator({ showAlways = false }: VapiConversati
           </div>
 
           {/* Audio visualization */}
-          <div className="mb-4">
+          <div className="mb-4 flex-shrink-0">
             <div className="flex items-center justify-center gap-1 h-16">
               {[...Array(20)].map((_, i) => (
                 <div
@@ -98,19 +98,27 @@ export function VapiConversationIndicator({ showAlways = false }: VapiConversati
           </div>
 
           {/* Latest transcript */}
-          {lastTranscript && (
-            <div className="border-t border-green-500/20 pt-4">
-              <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">
-                {lastTranscript.role === 'user' ? 'You' : 'Agent'}:
+          <div className="border-t border-green-500/20 pt-4 flex-1 overflow-hidden">
+            {lastTranscript ? (
+              <>
+                <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">
+                  {lastTranscript.role === 'user' ? 'You' : 'Agent'}:
+                </p>
+                <div className="overflow-y-auto max-h-[100px]">
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    {lastTranscript.text}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-gray-500 uppercase tracking-wider">
+                Waiting for conversation...
               </p>
-              <p className="text-sm text-gray-300 leading-relaxed">
-                {lastTranscript.text}
-              </p>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Instructions */}
-          <div className="mt-4 pt-4 border-t border-green-500/20">
+          <div className="mt-4 pt-4 border-t border-green-500/20 flex-shrink-0">
             <p className="text-xs text-gray-600">
               {isCallActive 
                 ? "Speak naturally to provide your destination city"

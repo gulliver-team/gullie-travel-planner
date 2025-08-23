@@ -1,15 +1,25 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import {
+  DocumentDetailsInputSchema,
+  DocumentGuideSchema,
+  type DocumentDetailsInput,
+  type DocumentGuide,
+} from "../schemas/zod_schemas";
 
 export const getDocumentDetails = internalMutation({
   args: {
     documentType: v.string(),
     country: v.string(),
   },
-  handler: async (ctx, args) => {
-    const { documentType, country } = args;
+  handler: async (ctx, args): Promise<string> => {
+    // Validate input using Zod schema
+    const validatedInput: DocumentDetailsInput =
+      DocumentDetailsInputSchema.parse(args);
 
-    const documentGuides: Record<string, any> = {
+    const { documentType, country } = validatedInput;
+
+    const documentGuides: Record<string, DocumentGuide> = {
       "police clearance": {
         purpose: "Proves you have no criminal record",
         where: "Local police department or national agency",
@@ -77,7 +87,7 @@ export const getDocumentDetails = internalMutation({
       },
     };
 
-    const doc = documentGuides[documentType.toLowerCase()] || {
+    const doc: DocumentGuide = documentGuides[documentType.toLowerCase()] || {
       purpose: "Supporting document for visa application",
       requirements: ["Contact embassy for specific requirements"],
       tips: "Ensure all documents are current and properly certified",
@@ -91,15 +101,15 @@ export const getDocumentDetails = internalMutation({
     }
 
     if (doc.process) {
-      response += `**Process:**\n${doc.process.map((step: string, i: number) => `${i + 1}. ${step}`).join('\n')}\n\n`;
+      response += `**Process:**\n${doc.process.map((step: string, i: number) => `${i + 1}. ${step}`).join("\n")}\n\n`;
     }
 
     if (doc.requirements) {
-      response += `**Requirements:**\n- ${doc.requirements.join('\n- ')}\n\n`;
+      response += `**Requirements:**\n- ${doc.requirements.join("\n- ")}\n\n`;
     }
 
     if (doc.must_include) {
-      response += `**Must include:**\n- ${doc.must_include.join('\n- ')}\n\n`;
+      response += `**Must include:**\n- ${doc.must_include.join("\n- ")}\n\n`;
     }
 
     if (doc.minimum_amounts) {
@@ -107,7 +117,7 @@ export const getDocumentDetails = internalMutation({
       for (const [visa, amount] of Object.entries(doc.minimum_amounts)) {
         response += `- ${visa}: ${amount}\n`;
       }
-      response += '\n';
+      response += "\n";
     }
 
     if (doc.validity) {

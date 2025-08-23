@@ -90,7 +90,7 @@ export function LandingHero({
                 onClick={() => startCall(userName || "Guest")}
                 className="flex-1 px-6 py-4 bg-gray-400 hover:bg-green-600 text-black 
                            font-bold uppercase tracking-wider text-2xl border border-green-400
-                           transform transition-all duration-200 hover:scale-x-105 hover:scale-y-105
+                           transform transition-all duration-100 hover:scale-x-105 hover:scale-y-105
                            active:bg-white active:text-black"
                 style={{
                   boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
@@ -102,8 +102,8 @@ export function LandingHero({
               <button
                 onClick={endCall}
                 className="flex-1 px-6 py-4 bg-red-500 hover:bg-red-600 text-white 
-                           font-bold uppercase tracking-wider text-sm border border-red-400
-                           transform transition-all duration-200 hover:scale-x-105 hover:scale-y-105
+                           font-bold uppercase tracking-wider text-2xl border border-red-400
+                           transform transition-all duration-100 hover:scale-x-105 hover:scale-y-105
                            active:bg-white active:text-black"
                 style={{
                   boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
@@ -163,7 +163,7 @@ export function LandingHero({
               />
             </h3>
             <p className="text-sm text-gray-400">
-              £1000/month until your visa is secured, first month free
+              $990/month until your visa is secured, first month free
             </p>
           </div>
         </div>

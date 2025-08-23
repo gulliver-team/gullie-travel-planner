@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ConvexClientProvider } from "@/providers/ConvexClientProvider";
 import { VapiProvider } from "@/providers/VapiProvider";
+import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
+import { Navigation } from "@/components/Navigation";
 
 const distekMono = localFont({
   src: [
@@ -37,11 +39,14 @@ export default function RootLayout({
       <body
         className={`${distekMono.variable} font-mono antialiased bg-black text-white min-h-screen`}
       >
-        <ConvexClientProvider>
-          <VapiProvider>
-            <div className="flex flex-col p-8 py-10"> {children}</div>
-          </VapiProvider>
-        </ConvexClientProvider>
+        <AuthKitProvider>
+          <ConvexClientProvider>
+            <VapiProvider>
+              <Navigation />
+              <div className="flex flex-col items-center justify-center p-8 pt-24 min-h-screen">{children}</div>
+            </VapiProvider>
+          </ConvexClientProvider>
+        </AuthKitProvider>
       </body>
     </html>
   );

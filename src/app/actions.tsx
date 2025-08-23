@@ -3,9 +3,14 @@
 import { createStreamableUI } from "@ai-sdk/rsc";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { signOut } from "@workos-inc/authkit-nextjs";
 
 //TODO: Add OPENAI_API_KEY to .env.local
 // Get from: https://platform.openai.com/api-keys
+
+export async function signOutAction() {
+  await signOut();
+}
 
 export async function streamSearchResults(fromCity: string, toCity: string) {
   const ui = createStreamableUI();

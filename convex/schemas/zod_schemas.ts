@@ -241,3 +241,305 @@ export function createFormatInstructions(): string {
     template.expected_format
   }\n\nConstraints:\n${template.constraints.map((c) => `- ${c}`).join("\n")}`;
 }
+
+// Tool-specific schemas for convex/tools/
+
+// City Search Tool Schemas
+export const CitySearchInputSchema = z.object({
+  originCity: z.string().min(2, "Origin city must be at least 2 characters"),
+  originCountry: z
+    .string()
+    .min(2, "Origin country must be at least 2 characters"),
+  destinationCity: z
+    .string()
+    .min(2, "Destination city must be at least 2 characters"),
+  destinationCountry: z
+    .string()
+    .min(2, "Destination country must be at least 2 characters"),
+});
+
+export const VisaOptionSchema = z.object({
+  type: z.enum(["cheapest", "fastest", "convenient", "premium"]),
+  visa: z.string(),
+  cost: z.string(),
+  timeline: z.string(),
+  description: z.string(),
+  details: z.object({
+    visa_cost: z.string(),
+    flight: z.string(),
+    housing: z.string(),
+    moving: z.string(),
+  }),
+});
+
+export const CitySearchOutputSchema = z.object({
+  cheapest: VisaOptionSchema,
+  fastest: VisaOptionSchema,
+  convenient: VisaOptionSchema,
+  premium: VisaOptionSchema,
+});
+
+export const EmailConfirmationInputSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  name: z.string().min(1, "Name is required"),
+  searchData: z.string(),
+  originCity: z.string(),
+  originCountry: z.string(),
+  destinationCity: z.string(),
+  destinationCountry: z.string(),
+  storageId: z.optional(z.any()), // Using any for Convex ID compatibility
+});
+
+// Cost Estimation Tool Schemas
+export const CostEstimationInputSchema = z.object({
+  destinationCity: z
+    .string()
+    .min(2, "Destination city must be at least 2 characters"),
+  includeFlight: z.boolean(),
+  includeHousing: z.boolean(),
+  includeMoving: z.boolean(),
+  familySize: z
+    .number()
+    .int()
+    .positive("Family size must be a positive integer"),
+});
+
+export const BaseCostsSchema = z.object({
+  flight: z.object({
+    economy: z.number().positive(),
+    premium: z.number().positive(),
+    business: z.number().positive(),
+  }),
+  housing: z.object({
+    shared: z.number().positive(),
+    one_bed: z.number().positive(),
+    two_bed: z.number().positive(),
+    family: z.number().positive(),
+  }),
+  moving: z.object({
+    minimal: z.number().positive(),
+    standard: z.number().positive(),
+    full: z.number().positive(),
+    premium: z.number().positive(),
+  }),
+  setup: z.object({
+    utilities: z.number().positive(),
+    deposits: z.number().positive(),
+    initial_groceries: z.number().positive(),
+    transport_setup: z.number().positive(),
+    phone_internet: z.number().positive(),
+  }),
+});
+
+export const CostBreakdownSchema = z.object({
+  totalMin: z.number().positive(),
+  totalMax: z.number().positive(),
+  breakdown: z.array(z.string()),
+  contingency: z.number().positive(),
+});
+
+// PDF Sender Tool Schemas
+export const ConsultationDataSchema = z.object({
+  name: z.string(),
+  originCity: z.string(),
+  originCountry: z.string(),
+  destinationCity: z.string(),
+  destinationCountry: z.string(),
+  visaOptions: z.string(),
+  timestamp: z.string().datetime(),
+});
+
+export const PDFSenderInputSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  consultationData: ConsultationDataSchema,
+  storageId: z.optional(z.string()),
+});
+
+export const PDFSenderOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  emailId: z.string().optional(),
+});
+
+// Email Capture Tool Schemas
+export const EmailCaptureInputSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  phone: z.optional(z.string()),
+  name: z.string().min(1, "Name is required"),
+});
+
+export const EmailCaptureOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+// Update User Report Tool Schemas
+export const UpdateUserReportInputSchema = z.object({
+  email: z.string().email("Invalid email format"),
+});
+
+// Document Details Tool Schemas
+export const DocumentDetailsInputSchema = z.object({
+  documentType: z.string().min(1, "Document type is required"),
+  country: z.string().min(2, "Country must be at least 2 characters"),
+});
+
+export const DocumentGuideSchema = z.object({
+  purpose: z.string(),
+  where: z.optional(z.string()),
+  process: z.optional(z.array(z.string())),
+  requirements: z.optional(z.array(z.string())),
+  must_include: z.optional(z.array(z.string())),
+  minimum_amounts: z.optional(z.record(z.string(), z.string())),
+  validity: z.optional(z.string()),
+  cost: z.optional(z.string()),
+  tests_included: z.optional(z.array(z.string())),
+  additional: z.optional(z.string()),
+  authentication: z.optional(z.string()),
+  tips: z.string(),
+});
+
+// Visa Requirements Tool Schemas
+export const VisaRequirementsInputSchema = z.object({
+  originCountry: z
+    .string()
+    .min(2, "Origin country must be at least 2 characters"),
+  destinationCountry: z
+    .string()
+    .min(2, "Destination country must be at least 2 characters"),
+  visaType: z.optional(z.string()),
+});
+
+export const VisaOptionDetailsSchema = z.object({
+  age: z.optional(z.string()),
+  duration: z.string(),
+  work: z.optional(z.string()),
+  cost: z.string(),
+  processing: z.string(),
+  requirement: z.optional(z.string()),
+  path_to_residency: z.optional(z.string()),
+  investment: z.optional(z.string()),
+});
+
+export const VisaRequirementsSchema = z.object({
+  documents: z.array(z.string()),
+  process: z.array(z.string()),
+  timeline: z.string(),
+  costs: z.object({
+    application: z.string(),
+    health_surcharge: z.string(),
+    biometric: z.string(),
+    priority_service: z.string(),
+  }),
+});
+
+// Prompt Structure Schemas for LLM Instructions
+export const VisaAnalysisRequirementsSchema = z.object({
+  visaTypes: z
+    .array(z.string())
+    .describe("Different visa types available (tourist, work, student, etc.)"),
+  costs: z.array(z.string()).describe("Costs for each visa type"),
+  processingTimes: z.array(z.string()).describe("Processing times"),
+  keyRequirements: z.array(z.string()).describe("Key requirements"),
+});
+
+export const RelocationOptionsStructureSchema = z.object({
+  cheapest: z.object({
+    label: z.string().describe("Cheapest option (budget-conscious)"),
+    description: z.string(),
+  }),
+  fastest: z.object({
+    label: z.string().describe("Fastest option (urgent relocation)"),
+    description: z.string(),
+  }),
+  convenient: z.object({
+    label: z.string().describe("Most convenient (balanced approach)"),
+    description: z.string(),
+  }),
+  premium: z.object({
+    label: z.string().describe("Premium option (comprehensive service)"),
+    description: z.string(),
+  }),
+});
+
+export const CostAnalysisRequirementsSchema = z.object({
+  marketRates: z
+    .string()
+    .describe("Current market rates for the destination city"),
+  familySizeImpact: z.string().describe("Family size impact on costs"),
+  seasonalVariations: z.string().describe("Seasonal variations"),
+  hiddenCosts: z.string().describe("Hidden costs often overlooked"),
+  currencyConversions: z
+    .string()
+    .describe("Currency conversions if applicable"),
+});
+
+export const CostEstimationOutputSchema = z.object({
+  totalCostRange: z.string().describe("Total cost range (min-max)"),
+  detailedBreakdown: z.string().describe("Detailed breakdown by category"),
+  moneySavingTips: z
+    .string()
+    .describe("Money-saving tips specific to this destination"),
+  hiddenCosts: z.string().describe("Hidden costs to watch for"),
+  bestTiming: z.string().describe("Best timing for relocation to save money"),
+});
+
+export const LLMPromptSchema = z.object({
+  systemRole: z.string().describe("System role description for the AI model"),
+  userPrompt: z.string().describe("User prompt content"),
+  expectedFormat: z.string().describe("Expected response format"),
+  constraints: z.array(z.string()).describe("Constraints for the response"),
+});
+
+export const CitySearchPromptSchema = z.object({
+  systemRole: z.object({
+    role: z.string().describe("AI role description"),
+    citizenshipCheck: z
+      .string()
+      .describe("Citizenship verification instruction"),
+    analysisInstructions: z
+      .string()
+      .describe("Instructions for analyzing search results"),
+    outputFormat: z.string().describe("Expected output format"),
+  }),
+  userPrompt: z.object({
+    context: z.string().describe("Context about the search results"),
+    request: z.string().describe("What the user is requesting"),
+    structureInstructions: z.string().describe("How to structure the response"),
+    outputRequirements: z.string().describe("What to include in the output"),
+  }),
+});
+
+// Export tool-specific types
+export type CitySearchInput = z.infer<typeof CitySearchInputSchema>;
+export type CitySearchOutput = z.infer<typeof CitySearchOutputSchema>;
+export type VisaOption = z.infer<typeof VisaOptionSchema>;
+export type EmailConfirmationInput = z.infer<
+  typeof EmailConfirmationInputSchema
+>;
+export type CostEstimationInput = z.infer<typeof CostEstimationInputSchema>;
+export type BaseCosts = z.infer<typeof BaseCostsSchema>;
+export type CostBreakdown = z.infer<typeof CostBreakdownSchema>;
+export type ConsultationData = z.infer<typeof ConsultationDataSchema>;
+export type PDFSenderInput = z.infer<typeof PDFSenderInputSchema>;
+export type PDFSenderOutput = z.infer<typeof PDFSenderOutputSchema>;
+export type EmailCaptureInput = z.infer<typeof EmailCaptureInputSchema>;
+export type EmailCaptureOutput = z.infer<typeof EmailCaptureOutputSchema>;
+export type UpdateUserReportInput = z.infer<typeof UpdateUserReportInputSchema>;
+export type DocumentDetailsInput = z.infer<typeof DocumentDetailsInputSchema>;
+export type DocumentGuide = z.infer<typeof DocumentGuideSchema>;
+export type VisaRequirementsInput = z.infer<typeof VisaRequirementsInputSchema>;
+export type VisaOptionDetails = z.infer<typeof VisaOptionDetailsSchema>;
+export type VisaRequirements = z.infer<typeof VisaRequirementsSchema>;
+export type VisaAnalysisRequirements = z.infer<
+  typeof VisaAnalysisRequirementsSchema
+>;
+export type RelocationOptionsStructure = z.infer<
+  typeof RelocationOptionsStructureSchema
+>;
+export type CostAnalysisRequirements = z.infer<
+  typeof CostAnalysisRequirementsSchema
+>;
+export type CostEstimationOutput = z.infer<typeof CostEstimationOutputSchema>;
+export type LLMPrompt = z.infer<typeof LLMPromptSchema>;
+export type CitySearchPrompt = z.infer<typeof CitySearchPromptSchema>;

@@ -20,6 +20,8 @@
 
 10. use context7 and deepwiki to understand how to use Polar (https://polar.sh) to charge users and what environment variable we need
 
+11. do not use env var in code base. never use env var in codebase, always use `process.env.something-var`
+
 Refer to implementation plan in `IMPLEMENTATION_PLAN.md`
 
 Always run `pnpm build` to test if there is problem with production deployment

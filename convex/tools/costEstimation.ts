@@ -209,7 +209,7 @@ export const analyzeWithOpenAI = internalAction({
     // Fallback to calculated estimates if OpenAI fails
     let totalMin = 0;
     let totalMax = 0;
-    let breakdown = [];
+    const breakdown = [];
 
     if (includeFlight) {
       totalMin += baseCosts.flight.economy;

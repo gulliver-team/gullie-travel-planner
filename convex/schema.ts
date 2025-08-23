@@ -7,6 +7,9 @@ import { date } from "./schemas/date";
 import { visa } from "./schemas/visa";
 import { flight } from "./schemas/flight";
 import { rental } from "./schemas/rental";
+import { document } from "./schemas/document";
+import { subscriptionSchema, checkoutSchema } from "./schemas/subscription";
+import { conversation } from "./schemas/conversation";
 
 export default defineSchema({
   messages: defineTable(message).vectorIndex("by_embedding", {
@@ -18,17 +21,7 @@ export default defineSchema({
   users: defineTable(user),
 
   // initial prompt - we will have created date to run simulation at here
-  cities: defineTable(city)
-    .vectorIndex("by_departure_embedding", {
-      dimensions: 1536,
-      vectorField: "departure_embedding",
-      filterFields: ["departure_city"],
-    })
-    .vectorIndex("by_arrival_embedding", {
-      dimensions: 1536,
-      vectorField: "arrival_embedding",
-      filterFields: ["arrival_city"],
-    }),
+  cities: defineTable(city),
 
   // user input dates at here
   dates: defineTable(date),
@@ -39,4 +32,33 @@ export default defineSchema({
   flights: defineTable(flight),
 
   rentals: defineTable(rental),
+  
+  // Generated PDF documents for users
+  documents: defineTable(document)
+    .index("by_user", ["userId"])
+    .index("by_email", ["email"]),
+    
+  // Subscription data from Polar
+  subscriptions: defineTable(subscriptionSchema)
+    .index("by_polar_id", ["polarId"])
+    .index("by_user_id", ["userId"])
+    .index("by_status", ["status"]),
+    
+  // Checkout records from Polar
+  checkouts: defineTable(checkoutSchema)
+    .index("by_checkout_id", ["checkoutId"])
+    .index("by_customer_id", ["customerId"]),
+    
+  // Vapi conversation history
+  conversations: defineTable(conversation)
+    .index("by_call_id", ["callId"])
+    .index("by_session_id", ["sessionId"])
+    .index("by_user_id", ["userId"])
+    .index("by_email", ["userEmail"])
+    .index("by_phone", ["phoneNumber"])
+    .index("by_status", ["status"])
+    .vectorIndex("by_embedding", {
+      dimensions: 1536,
+      vectorField: "embedding",
+    }),
 });

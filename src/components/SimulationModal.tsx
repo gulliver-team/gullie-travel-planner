@@ -15,10 +15,10 @@ interface SimulationModalProps {
 }
 
 const scenarios = [
-  { key: "cheapest" as const, label: "Cheapest Options" },
-  { key: "fastest" as const, label: "Fastest Options" },
-  { key: "balanced" as const, label: "Balanced Options" },
-  { key: "luxury" as const, label: "Luxury Options" },
+  { key: "cheapest" as const, label: "Cheapest Option" },
+  { key: "fastest" as const, label: "Fastest Option" },
+  { key: "balanced" as const, label: "Balanced Option" },
+  { key: "luxury" as const, label: "Luxury Option" },
 ];
 
 const loadingPhrases = [
@@ -187,7 +187,7 @@ export function SimulationModal({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-black border border-green-500/30 w-full max-w-6xl max-h-[90vh] overflow-y-auto relative"
+            className="bg-black border border-green-500/30 w-full max-w-[90vw] max-h-[90vh] relative"
             onClick={(e) => e.stopPropagation()}
             style={{
               boxShadow: "0 0 40px rgba(0, 255, 0, 0.1)",
@@ -258,7 +258,7 @@ export function SimulationModal({
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
+                      className=""
                     >
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   <div className="space-y-2">
@@ -382,7 +382,7 @@ export function SimulationModal({
                 </div>
               </form>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-1 lg:grid-cols-4 lg:gap-2">
                 {scenarios.map((scenario) => (
                   <ScenarioCard
                     key={scenario.key}
@@ -457,7 +457,7 @@ function ScenarioCard({
   
   return (
     <motion.div
-      className="bg-black border border-green-500/30 p-4 relative overflow-hidden"
+      className="bg-black border border-green-500/30 p-4 relative"
       initial={showInitialAnimation ? { opacity: 0, y: 20 } : false}
       animate={showInitialAnimation ? { opacity: 1, y: 0 } : false}
       transition={{ duration: 0.3 }}
@@ -465,7 +465,7 @@ function ScenarioCard({
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
 
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
+        <div className="items-center flex justify-between mb-4">
           <h3 className="text-sm font-bold text-green-500 uppercase tracking-wider">
             {scenario.label}
           </h3>
@@ -510,54 +510,94 @@ function ScenarioCard({
           ) : result ? (
             <div className="space-y-4">
               {timeline && (
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex gap-2 mb-4">
                   {timeline.budget_total_usd && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
+                    <span className="inline-flex max-h-10 items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
                       <span>Budget</span>
                       <span>${timeline.budget_total_usd.toLocaleString()}</span>
                     </span>
                   )}
                   {timeline.timeframe_months && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
+                    <span className="inline-flex max-h-10 items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
                       <span>Timeframe</span>
-                      <span>{timeline.timeframe_months} mo</span>
+                      <span>{timeline.timeframe_months}mo</span>
                     </span>
                   )}
                 </div>
               )}
 
-              {!isExpanded && (
-                <div className="text-sm text-gray-300 font-mono">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => <h1 className="text-lg font-bold text-green-500 mb-2 mt-4">{children}</h1>,
-                      h2: ({ children }) => <h2 className="text-md font-bold text-green-500 mb-2 mt-3">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-sm font-bold text-green-500 mb-1 mt-2">{children}</h3>,
-                      p: ({ children }) => <p className="text-gray-300 mb-2">{children}</p>,
-                      ul: ({ children }) => <ul className="list-disc list-inside mb-2 text-gray-300">{children}</ul>,
-                      ol: ({ children }) => <ol className="list-decimal list-inside mb-2 text-gray-300">{children}</ol>,
-                      li: ({ children }) => <li className="mb-1">{children}</li>,
-                      code: ({ children }) => <code className="bg-green-500/10 text-green-400 px-1 py-0.5">{children}</code>,
-                      pre: ({ children }) => <pre className="bg-green-500/10 text-green-400 p-2 mb-2 overflow-x-auto">{children}</pre>,
-                      blockquote: ({ children }) => <blockquote className="border-l-2 border-green-500 pl-3 text-gray-400 italic mb-2">{children}</blockquote>,
-                      strong: ({ children }) => <strong className="font-bold text-green-400">{children}</strong>,
-                      em: ({ children }) => <em className="italic text-gray-300">{children}</em>,
-                      hr: () => <hr className="border-green-500/30 my-4" />,
-                      a: ({ href, children }) => <a href={href} className="text-green-400 underline hover:text-green-300" target="_blank" rel="noopener noreferrer">{children}</a>
-                    }}
-                  >
-                    {result.slice(0, 800) + (result.length > 800 ? "..." : "")}
-                  </ReactMarkdown>
-                  {result.length > 800 && (
-                    <div className="text-xs text-gray-500 mt-2">
-                      Click expand to view full content ({Math.round(result.length / 1000)}k characters)
+              {!isExpanded && timeline?.phases && (
+                  <div className="border-t border-green-500/20 pt-4">
+                    <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+                      Timeline Breakdown
+                    </h4>
+                    <div className="space-y-3">
+                  {timeline.phases.map((phase, i) => (
+                    <div
+                      key={i}
+                      className="bg-white/5 border border-green-500/20 p-3"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold text-green-500">
+                          {phase.name}
+                        </span>
+                        {(phase.start_month !== undefined ||
+                          phase.end_month !== undefined) && (
+                          <span className="text-xs text-gray-500">
+                            {phase.start_month ?? 0}–{phase.end_month ?? ""}{" "}
+                            mo
+                          </span>
+                        )}
+                      </div>
+                      {phase.summary && (
+                        <p className="text-xs text-gray-400 mb-2">
+                          {phase.summary}
+                        </p>
+                      )}
+                      {phase.tasks && phase.tasks.length > 0 && (
+                        <div className="space-y-2">
+                          {phase.tasks.map((task, j) => (
+                            <div key={j} className="flex items-start gap-2">
+                              <div
+                                className={`w-2 h-2 mt-1 ${
+                                  task.milestone
+                                    ? "bg-green-500"
+                                    : "bg-gray-600"
+                                }`}
+                              />
+                              <div className="flex-1">
+                                <div className="text-xs text-gray-300">
+                                  {task.title}
+                                </div>
+                                {task.desc && (
+                                  <div className="text-xs text-gray-500">
+                                    {task.desc}
+                                  </div>
+                                )}
+                                <div className="flex gap-2 mt-1">
+                                  {task.cost_usd && (
+                                    <span className="text-xs text-gray-600 border border-gray-700 px-1">
+                                      ${task.cost_usd.toLocaleString()}
+                                    </span>
+                                  )}
+                                  {task.duration_weeks && (
+                                    <span className="text-xs text-gray-600 border border-gray-700 px-1">
+                                      {task.duration_weeks} wk
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
+                  ))}
+                    </div>
+                  </div>
+                )}
 
-              <AnimatePresence>
+              {/* <AnimatePresence>
                 {isExpanded && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
@@ -588,79 +628,10 @@ function ScenarioCard({
                         {result}
                       </ReactMarkdown>
                     </div>
-                    {timeline?.phases && (
-                      <div className="border-t border-green-500/20 pt-4">
-                        <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">
-                          Timeline Breakdown
-                        </h4>
-                        <div className="space-y-3">
-                      {timeline.phases.map((phase, i) => (
-                        <div
-                          key={i}
-                          className="bg-white/5 border border-green-500/20 p-3"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-bold text-green-500">
-                              {phase.name}
-                            </span>
-                            {(phase.start_month !== undefined ||
-                              phase.end_month !== undefined) && (
-                              <span className="text-xs text-gray-500">
-                                {phase.start_month ?? 0}–{phase.end_month ?? ""}{" "}
-                                mo
-                              </span>
-                            )}
-                          </div>
-                          {phase.summary && (
-                            <p className="text-xs text-gray-400 mb-2">
-                              {phase.summary}
-                            </p>
-                          )}
-                          {phase.tasks && phase.tasks.length > 0 && (
-                            <div className="space-y-2">
-                              {phase.tasks.map((task, j) => (
-                                <div key={j} className="flex items-start gap-2">
-                                  <div
-                                    className={`w-2 h-2 mt-1 ${
-                                      task.milestone
-                                        ? "bg-green-500"
-                                        : "bg-gray-600"
-                                    }`}
-                                  />
-                                  <div className="flex-1">
-                                    <div className="text-xs text-gray-300">
-                                      {task.title}
-                                    </div>
-                                    {task.desc && (
-                                      <div className="text-xs text-gray-500">
-                                        {task.desc}
-                                      </div>
-                                    )}
-                                    <div className="flex gap-2 mt-1">
-                                      {task.cost_usd && (
-                                        <span className="text-xs text-gray-600 border border-gray-700 px-1">
-                                          ${task.cost_usd.toLocaleString()}
-                                        </span>
-                                      )}
-                                      {task.duration_weeks && (
-                                        <span className="text-xs text-gray-600 border border-gray-700 px-1">
-                                          {task.duration_weeks} wk
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                        </div>
-                      </div>
-                    )}
+                  
                   </motion.div>
                 )}
-              </AnimatePresence>
+              </AnimatePresence> */}
             </div>
           ) : (
             <div className="text-gray-600 text-sm">Ready to simulate...</div>

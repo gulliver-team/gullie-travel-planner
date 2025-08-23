@@ -451,10 +451,10 @@ interface SimulationModalProps {
 }
 
 const scenarios = [
-  { key: "cheapest" as const, label: "Cheapest Options" },
-  { key: "fastest" as const, label: "Fastest Options" },
-  { key: "balanced" as const, label: "Balanced Options" },
-  { key: "luxury" as const, label: "Luxury Options" },
+  { key: "cheapest" as const, label: "Cheapest Option" },
+  { key: "fastest" as const, label: "Fastest Option" },
+  { key: "balanced" as const, label: "Balanced Option" },
+  { key: "luxury" as const, label: "Luxury Option" },
 ];
 
 const loadingPhrases = [

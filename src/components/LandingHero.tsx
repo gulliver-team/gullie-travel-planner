@@ -26,9 +26,9 @@ export function LandingHero({
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <div className="flex flex-col items-center justify-center gap-10">
+      <div className="flex flex-col items-center justify-center gap-6">
         {/* Header Section */}
-        <div className="text-center py-10 flex flex-col items-center space-y-6">
+        <div className="text-center py-10 flex flex-col items-center space-y-3">
           <h1 className="text-2xl md:text-8xl font-bold">
             <DecryptedText
               text="GULLIE"
@@ -163,11 +163,7 @@ export function LandingHero({
             )}
           </div>
           <div className="text-center gap-4 flex flex-col text-xs text-gray-600">
-            <p>
-              We analyze cheapest, fastest, most expensive, and most convenient
-              options
-            </p>
-            <p>Personalized PDF reports delivered to your email</p>
+        
             <div className="mt-4 pt-4 border-t border-gray-800">
               <p className="text-green-400 text-xl font-bold">
                 📞 Call us directly:{" "}
@@ -263,7 +259,7 @@ export function LandingHero({
           </div>
         </div>
 
-        {/* Simulations IFrame Preview */}
+        {/* Simulations IFrame Preview
         <div className="w-full max-w-6xl mt-10">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-200">Simulations Preview</h2>
@@ -277,7 +273,7 @@ export function LandingHero({
               style={{ height: "900px", backgroundColor: "#0a0b0d" }}
             />
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

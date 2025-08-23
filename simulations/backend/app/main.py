@@ -60,13 +60,12 @@ async def stream_response(request: Request):
     def streamer():
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            yield b"[server] Missing OPENAI_API_KEY.\n"
+            yield b'{"error": "Missing OPENAI_API_KEY"}\n'
             return
 
         client = OpenAI(api_key=api_key)
 
         try:
-            # Stream using the Responses API
             # Build messages: structured or fallback
             if start_city or destination_city or budget_range or move_month or context:
                 messages = build_messages(
@@ -83,27 +82,20 @@ async def stream_response(request: Request):
                 # freeform prompt as user content
                 messages = [{"role": "user", "content": prompt or "Provide a short sample."}]
 
-            with client.responses.stream(
+            # Use non-streaming response to get structured JSON
+            resp = client.responses.create(
                 model=os.getenv("OPENAI_MODEL", "gpt-5-nano-2025-08-07"),
                 input=messages,
-            ) as stream:
-                # Removed scenario header so client loaders are not interrupted
-                for event in stream:
-                    if event.type == "response.output_text.delta":
-                        chunk = getattr(event, "delta", "") or ""
-                        yield chunk.encode("utf-8")
-                    elif event.type == "response.error":
-                        err = getattr(event, "error", None)
-                        if err:
-                            yield f"\n[error] {err}\n".encode("utf-8")
-
-                # Access the final response if needed
-                # final = stream.get_final_response()
-                yield b"\n"
+            )
+            data = _extract_json_obj(resp)
+            if data:
+                yield json.dumps(data).encode("utf-8")
+            else:
+                yield b'{"error": "Failed to parse response"}\n'
         except Exception as exc:
-            yield f"[server] {exc}\n".encode("utf-8")
+            yield f'{{"error": "{str(exc)}"}}\n'.encode("utf-8")
 
-    return StreamingResponse(streamer(), media_type="text/plain; charset=utf-8")
+    return StreamingResponse(streamer(), media_type="application/json")
 
 
 # =========================

@@ -60,16 +60,33 @@
         border-radius: 10px; padding: 12px; max-height: 60vh; overflow: auto; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; }
       .label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
       pre { margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-      /* Full-width scenarios grid (with gutters), responsive */
+      /* Comparison table layout */
       .scenarios { margin-top: 16px; }
-      .grid { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); }
-      @media (max-width: 1400px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-      @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-      @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
-      .tile { background: var(--code); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; min-height: 180px; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; }
-      .tile-header { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600; letter-spacing: .2px; }
-      .tile-output { margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 13px; line-height: 1.4; max-height: 35vh; overflow: auto; }
-      .timeline-area { margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px; }
+      .comparison-table { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; }
+      .table-header { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--accent); border-bottom: 1px solid var(--border); }
+      .table-header .header-cell { padding: 16px 12px; text-align: center; font-weight: 700; font-size: 14px; color: var(--text); letter-spacing: .2px; border-right: 1px solid var(--border); }
+      .table-header .header-cell:last-child { border-right: none; }
+      .table-body { display: grid; grid-template-columns: repeat(4, 1fr); min-height: 400px; }
+      .table-cell { padding: 16px 12px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+      .table-cell:last-child { border-right: none; }
+      
+      /* Responsive design */
+      @media (max-width: 1200px) { 
+        .table-header { grid-template-columns: repeat(2, 1fr); }
+        .table-body { grid-template-columns: repeat(2, 1fr); }
+        .table-header .header-cell:nth-child(2), .table-cell:nth-child(2) { border-right: none; }
+        .table-header .header-cell:nth-child(3), .table-cell:nth-child(3) { border-top: 1px solid var(--border); }
+        .table-header .header-cell:nth-child(4), .table-cell:nth-child(4) { border-top: 1px solid var(--border); border-right: none; }
+      }
+      @media (max-width: 640px) { 
+        .table-header { grid-template-columns: 1fr; }
+        .table-body { grid-template-columns: 1fr; }
+        .table-header .header-cell, .table-cell { border-right: none; border-bottom: 1px solid var(--border); }
+        .table-header .header-cell:last-child, .table-cell:last-child { border-bottom: none; }
+      }
+      .cell-content { flex: 1; }
+      .tile-output { margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 13px; line-height: 1.4; max-height: 35vh; overflow: auto; display: none; }
+      .timeline-area { flex: 1; }
       /* Timeline UI */
       .timeline { display: grid; gap: 12px; }
       .timeline-header { display:flex; align-items:center; justify-content:space-between; gap: 8px; }
@@ -154,10 +171,18 @@
           </div>
         </form>
       </section>
-      <!-- Scenarios grid spans the page width (with gutters) and isn't confined to the form width -->
+      <!-- Comparison table spans the page width (with gutters) and isn't confined to the form width -->
       <section class="scenarios">
         <div id="status" class="status-badge" aria-live="polite"><span class="status-dot"></span><span class="status-text">Ready</span></div>
-        <div id="grid" class="grid"></div>
+        <div id="comparison-table" class="comparison-table" style="display: none;">
+          <div class="table-header">
+            <div class="header-cell">Cheapest Options</div>
+            <div class="header-cell">Fastest Options</div>
+            <div class="header-cell">Balanced Options</div>
+            <div class="header-cell">Luxury Options</div>
+          </div>
+          <div class="table-body" id="table-body"></div>
+        </div>
       </section>
     </main>
 
@@ -171,9 +196,11 @@
       const budgetMaxEl = document.getElementById('budget_max');
       const monthEl = document.getElementById('move_month');
       const contextEl = document.getElementById('context');
-      const grid = document.getElementById('grid');
+      const comparisonTable = document.getElementById('comparison-table');
+      const tableBody = document.getElementById('table-body');
 
       let controllers = [];
+      let tableData = {};
 
       // Loading phrases for pre-stream animation
       const loadingPhrases = [
@@ -229,44 +256,46 @@
   'Building a final, hyper-personalized relocation feasibility and strategic action report'
 ];
 
-      function attachAutoScroll(tile) {
-        const out = tile.querySelector('.tile-output');
-        tile._autoscroll = true; // follow output by default
-        out.addEventListener('scroll', () => {
-          const distanceFromBottom = out.scrollHeight - out.scrollTop - out.clientHeight;
-          tile._autoscroll = distanceFromBottom < 8; // re-enable when user returns to bottom
-        });
+      function attachAutoScroll(cell) {
+        const out = cell.querySelector('.tile-output');
+        cell._autoscroll = true; // follow output by default
+        if (out) {
+          out.addEventListener('scroll', () => {
+            const distanceFromBottom = out.scrollHeight - out.scrollTop - out.clientHeight;
+            cell._autoscroll = distanceFromBottom < 8; // re-enable when user returns to bottom
+          });
+        }
       }
 
       function randomPhrase() {
         return loadingPhrases[Math.floor(Math.random() * loadingPhrases.length)];
       }
 
-      function setTileLoading(tile, on) {
-        const out = tile.querySelector('.tile-output');
+      function setTileLoading(cell, on) {
+        const timelineArea = cell.querySelector('.timeline-area');
         if (on) {
-          tile.classList.add('loading');
-          out.innerHTML = '<div class="placeholder"><span class="bars"><i></i><i></i><i></i></span><span class="msg"></span></div>';
-          const msgEl = out.querySelector('.msg');
+          cell.classList.add('loading');
+          timelineArea.innerHTML = '<div class="placeholder"><span class="bars"><i></i><i></i><i></i></span><span class="msg"></span></div>';
+          const msgEl = timelineArea.querySelector('.msg');
           msgEl.textContent = randomPhrase();
-          // Rotate phrases with a randomized cadence per tile (< 1s)
+          // Rotate phrases with a randomized cadence per cell (< 1s)
           const schedule = () => {
             const delay = 350 + Math.random() * 400; // 350–750ms
-            tile._loadingTimer = setTimeout(() => {
-              msgEl.textContent = randomPhrase();
-              schedule();
+            cell._loadingTimer = setTimeout(() => {
+              if (msgEl && msgEl.parentElement) {
+                msgEl.textContent = randomPhrase();
+                schedule();
+              }
             }, delay);
           };
           // Clear any previous timers just in case
-          if (tile._loadingTimer) { clearTimeout(tile._loadingTimer); }
-          if (tile._loadingInterval) { clearInterval(tile._loadingInterval); tile._loadingInterval = null; }
+          if (cell._loadingTimer) { clearTimeout(cell._loadingTimer); }
+          if (cell._loadingInterval) { clearInterval(cell._loadingInterval); cell._loadingInterval = null; }
           schedule();
         } else {
-          tile.classList.remove('loading');
-          if (tile._loadingTimer) { clearTimeout(tile._loadingTimer); tile._loadingTimer = null; }
-          if (tile._loadingInterval) { clearInterval(tile._loadingInterval); tile._loadingInterval = null; }
-          // Clear placeholder but keep existing text if any
-          if (out.querySelector('.placeholder')) { out.textContent = out.textContent; }
+          cell.classList.remove('loading');
+          if (cell._loadingTimer) { clearTimeout(cell._loadingTimer); cell._loadingTimer = null; }
+          if (cell._loadingInterval) { clearInterval(cell._loadingInterval); cell._loadingInterval = null; }
         }
       }
 
@@ -278,21 +307,23 @@
         if (typeof text === 'string') txt.textContent = text;
       }
 
-      function createTile(label) {
-        const tile = document.createElement('div');
-        tile.className = 'tile';
-        tile.innerHTML = `
-          <div class="tile-header">${label}</div>
-          <pre class="tile-output"></pre>
-          <div class="timeline-area"></div>
+      function createTableCell() {
+        const cell = document.createElement('div');
+        cell.className = 'table-cell';
+        cell.innerHTML = `
+          <div class="cell-content">
+            <pre class="tile-output"></pre>
+            <div class="timeline-area"></div>
+          </div>
         `;
-        return tile;
+        return cell;
       }
 
-      async function streamToTile(scenario, payload, tile, controller) {
-        const out = tile.querySelector('.tile-output');
+      async function streamToCell(scenario, payload, cell, controller) {
+        const out = cell.querySelector('.tile-output');
+        const timelineArea = cell.querySelector('.timeline-area');
         out.textContent = '';
-        setTileLoading(tile, true);
+        setTileLoading(cell, true);
         try {
           const resp = await fetch('/api/stream', {
             method: 'POST',
@@ -301,37 +332,48 @@
             signal: controller.signal,
           });
           if (!resp.ok || !resp.body) {
-            setTileLoading(tile, false);
+            setTileLoading(cell, false);
             out.textContent = `Error: ${resp.status} ${resp.statusText}`;
             return;
           }
           const reader = resp.body.getReader();
           const decoder = new TextDecoder();
           let received = false;
+          let jsonBuffer = '';
+          
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
             if (!received) {
               received = true;
-              // Swap out placeholder for real content
-              setTileLoading(tile, false);
+              setTileLoading(cell, false);
               out.textContent = '';
             }
-            out.textContent += decoder.decode(value, { stream: true });
-            // Auto-follow output as it streams
-            if (tile._autoscroll) {
-              out.scrollTop = out.scrollHeight;
+            jsonBuffer += decoder.decode(value, { stream: true });
+          }
+          
+          // Parse JSON and render timeline directly
+          try {
+            const data = JSON.parse(jsonBuffer);
+            if (data.error) {
+              timelineArea.innerHTML = `<div style="color: #d66; text-align: center; padding: 20px;">Error: ${data.error}</div>`;
+            } else {
+              // Store data and render timeline
+              tableData[scenario] = data;
+              renderTimeline(timelineArea, data);
             }
+          } catch (parseErr) {
+            timelineArea.innerHTML = `<div style="color: #d66; text-align: center; padding: 20px;">Failed to parse response: ${parseErr}</div>`;
           }
         } catch (err) {
           if (controller.signal.aborted) {
-            out.textContent += '\n[aborted]';
+            timelineArea.innerHTML = '<div style="color: #9ea3ab; text-align: center; padding: 20px;">[aborted]</div>';
           } else {
-            out.textContent = `[fetch error] ${err}`;
+            timelineArea.innerHTML = `<div style="color: #d66; text-align: center; padding: 20px;">[fetch error] ${err}</div>`;
           }
         }
         finally {
-          setTileLoading(tile, false);
+          setTileLoading(cell, false);
         }
       }
 
@@ -340,12 +382,17 @@
         // Abort any in-flight streams
         controllers.forEach(c => c.abort());
         controllers = [];
-        // Stop any active loading animations from prior tiles
-        document.querySelectorAll('.tile').forEach(t => {
+        tableData = {};
+        
+        // Stop any active loading animations from prior cells
+        document.querySelectorAll('.table-cell').forEach(t => {
           if (t._loadingTimer) { clearTimeout(t._loadingTimer); t._loadingTimer = null; }
           if (t._loadingInterval) { clearInterval(t._loadingInterval); t._loadingInterval = null; }
         });
-        grid.innerHTML = '';
+        
+        // Clear and setup table
+        tableBody.innerHTML = '';
+        comparisonTable.style.display = 'block';
 
         // Build a flexible budget range string
         const minVal = budgetMinEl.value ? Number(budgetMinEl.value) : null;
@@ -377,22 +424,27 @@
           { key: 'luxury', label: 'Luxury Options' },
         ];
 
-        for (const s of scenarios) {
-          const tile = createTile(s.label);
-          tile.dataset.key = s.key;
-          tile.dataset.label = s.label;
-          grid.appendChild(tile);
-          attachAutoScroll(tile);
+        // Create table cells for each scenario
+        scenarios.forEach(s => {
+          const cell = createTableCell();
+          cell.dataset.key = s.key;
+          cell.dataset.label = s.label;
+          tableBody.appendChild(cell);
+          attachAutoScroll(cell);
+        });
+
+        // Start streaming for all scenarios in parallel
+        for (let i = 0; i < scenarios.length; i++) {
+          const s = scenarios[i];
+          const cell = tableBody.children[i];
           const controller = new AbortController();
           controllers.push(controller);
           // Fire and forget; no await here to keep them parallel
-          streamToTile(s.key, payload, tile, controller).finally(() => {
+          streamToCell(s.key, payload, cell, controller).finally(() => {
             done += 1;
             if (done === scenarios.length) {
               btn.disabled = false; btn.textContent = 'Run 4 Scenarios';
               setStatus('done', 'All scenarios complete');
-              // Kick off timeline generation for each tile
-              Array.from(grid.children).forEach(t => buildTimelineForTile(t));
             }
           });
         }
@@ -411,87 +463,74 @@
           budgetMaxEl.value = '';
           monthEl.value = '';
           contextEl.value = '';
-        grid.innerHTML = '';
+        tableBody.innerHTML = '';
+        comparisonTable.style.display = 'none';
+        tableData = {};
         setStatus('', 'Ready');
       });
 
-      async function buildTimelineForTile(tile) {
-        const area = tile.querySelector('.timeline-area');
-        area.innerHTML = `<div class="tl-loading"><span class="bars"><i></i><i></i><i></i></span> Building timeline…</div>`;
-        const out = tile.querySelector('.tile-output');
-        const raw = out.textContent || '';
-        const payload = {
-          scenario_key: tile.dataset.key,
-          scenario_title: tile.dataset.label,
-          raw_text: raw.slice(0, 15000),
-        };
-        try {
-          const resp = await fetch('/api/timeline', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          if (!resp.ok) {
-            let detail = '';
-            try { detail = await resp.text(); } catch {}
-            throw new Error(`${resp.status} ${resp.statusText}${detail ? ' — ' + detail : ''}`);
-          }
-          const data = await resp.json();
-          renderTimeline(area, data);
-        } catch (err) {
-          area.innerHTML = `<div class="tl-loading">\n            <span style="color:#d66;">Failed to build timeline:</span> ${err}.\n            <button class="btn-ghost" style="margin-left:8px;" onclick="(async()=>{ const t=this.closest('.tile'); if(t) { await window.__retryTimeline(t); } })()">Retry</button>\n          </div>`;
-        }
-      }
-
-      window.__retryTimeline = async (tile) => { await buildTimelineForTile(tile); };
 
       function renderTimeline(container, tl) {
         const fmtMoney = (n) => (typeof n === 'number' && isFinite(n)) ? `$${n.toLocaleString()}` : null;
         const fmtMonths = (n) => (typeof n === 'number' && isFinite(n)) ? `${n} mo` : null;
 
-        const chips = [];
+        // Compact header with key metrics
         const money = fmtMoney(tl.budget_total_usd);
-        if (money) chips.push(`<span class="chip"><span>Budget</span><span class="val">${money}</span></span>`);
         const months = fmtMonths(tl.timeframe_months);
-        if (months) chips.push(`<span class="chip"><span>Timeframe</span><span class="val">${months}</span></span>`);
-
-        const header = `
-          <div class="timeline-header">
-            <div class="tl-title">${tl.headline ? escapeHtml(tl.headline) : 'Timeline'}</div>
-            <div class="chips">${chips.join('')}</div>
+        const score = typeof tl.feasibility_score === 'number' ? `${tl.feasibility_score}/10` : null;
+        
+        const metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; padding:10px; background:var(--accent); border-radius:8px;">
+            ${money ? `<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--muted);">Budget:</span><span style="font-weight:600;">${money}</span></div>` : ''}
+            ${months ? `<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--muted);">Timeline:</span><span style="font-weight:600;">${months}</span></div>` : ''}
+            ${score ? `<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--muted);">Score:</span><span style="font-weight:600;">${score}</span></div>` : ''}
           </div>
         `;
 
-        const phases = Array.isArray(tl.phases) ? tl.phases : [];
+        const phases = Array.isArray(tl.phases) ? tl.phases.slice(0, 3) : []; // Limit to first 3 phases for space
         const phasesHtml = phases.map(ph => {
           const span = (ph.start_month != null || ph.end_month != null)
-            ? `<span class="phase-span">${ph.start_month ?? 0}–${ph.end_month ?? ''} mo</span>`
+            ? `<span style="color:var(--muted); font-size:11px;">${ph.start_month ?? 0}–${ph.end_month ?? ''} mo</span>`
             : '';
-          const summary = ph.summary ? `<div class="phase-summary">${escapeHtml(ph.summary)}</div>` : '';
-          const tasks = Array.isArray(ph.tasks) ? ph.tasks : [];
+          const tasks = Array.isArray(ph.tasks) ? ph.tasks.slice(0, 3) : []; // Limit tasks for space
           const tasksHtml = tasks.map(t => {
-            const metas = [];
-            if (typeof t.cost_usd === 'number') metas.push(`<span class="meta">${fmtMoney(t.cost_usd)}</span>`);
-            if (typeof t.duration_weeks === 'number') metas.push(`<span class="meta">${t.duration_weeks} wk</span>`);
+            const cost = typeof t.cost_usd === 'number' ? fmtMoney(t.cost_usd) : null;
+            const duration = typeof t.duration_weeks === 'number' ? `${t.duration_weeks}w` : null;
+            const meta = [cost, duration].filter(Boolean).join(' • ');
             return `
-              <div class="task">
-                <div class="dot" style="background:${t.milestone ? '#67e06b' : '#cfd3d8'}"></div>
-                <div class="task-body">
-                  <div class="task-title">${escapeHtml(t.title || '')}</div>
-                  ${t.desc ? `<div class="task-desc">${escapeHtml(t.desc)}</div>` : ''}
-                  ${metas.length ? `<div class="task-meta">${metas.join('')}</div>` : ''}
+              <div style="display:flex; gap:6px; margin:4px 0; font-size:12px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:${t.milestone ? '#67e06b' : '#9ea3ab'}; margin-top:6px; flex-shrink:0;"></div>
+                <div style="flex:1;">
+                  <div style="font-weight:500; line-height:1.3;">${escapeHtml(t.title || '')}</div>
+                  ${meta ? `<div style="color:var(--muted); font-size:10px; margin-top:2px;">${meta}</div>` : ''}
                 </div>
               </div>`;
           }).join('');
           return `
-            <div class="phase">
-              <div class="phase-head"><div class="phase-name">${escapeHtml(ph.name || '')}</div>${span}</div>
-              ${summary}
-              <div class="tasks">${tasksHtml}</div>
+            <div style="margin-bottom:12px; padding:8px; border:1px solid var(--border); border-radius:6px; background:rgba(255,255,255,0.02);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <div style="font-weight:600; font-size:13px;">${escapeHtml(ph.name || '')}</div>
+                ${span}
+              </div>
+              ${tasksHtml}
             </div>`;
         }).join('');
 
-        container.innerHTML = `<div class="timeline">${header}<div class="phases">${phasesHtml}</div></div>`;
+        // Compact pros/cons
+        let prosConsHtml = '';
+        if ((Array.isArray(tl.pros) && tl.pros.length) || (Array.isArray(tl.cons) && tl.cons.length)) {
+          const pros = Array.isArray(tl.pros) ? tl.pros.slice(0, 2) : []; // Limit to 2 each
+          const cons = Array.isArray(tl.cons) ? tl.cons.slice(0, 2) : [];
+          const prosHtml = pros.map(p => `<div style="font-size:11px; color:#67e06b; margin:2px 0;">✓ ${escapeHtml(p)}</div>`).join('');
+          const consHtml = cons.map(c => `<div style="font-size:11px; color:#d66; margin:2px 0;">✗ ${escapeHtml(c)}</div>`).join('');
+          prosConsHtml = `
+            <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+              ${prosHtml}${consHtml}
+            </div>
+          `;
+        }
+
+        container.innerHTML = `<div>${metricsHtml}${phasesHtml}${prosConsHtml}</div>`;
       }
 
       function escapeHtml(str) {

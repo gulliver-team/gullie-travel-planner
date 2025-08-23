@@ -67,12 +67,14 @@ Scenario: {scenario_label}
 Guidance: {scenario_bias}
 
 OUTPUT FORMAT
-Return a concise Markdown block containing:
-- A short headline for the scenario
-- Bullet summaries for each factor with concrete estimates
-- Total Estimated Cost (USD) and Estimated Timeline (months)
-- One major pro and one major con
-- A feasibility score (1-10)
+Return a structured JSON response with:
+- headline: Short title for the scenario
+- budget_total_usd: Total estimated cost in USD
+- timeframe_months: Timeline in months
+- phases: Array of phase objects with tasks
+- feasibility_score: 1-10 rating
+- pros: Array of major advantages
+- cons: Array of major disadvantages
 """.strip()
 
     user = (

@@ -209,7 +209,7 @@ export const analyzeWithOpenAI = internalAction({
     // Fallback to calculated estimates if OpenAI fails
     let totalMin = 0;
     let totalMax = 0;
-    let breakdown = [];
+    const breakdown = [];
 
     if (includeFlight) {
       totalMin += baseCosts.flight.economy;
@@ -219,7 +219,7 @@ export const analyzeWithOpenAI = internalAction({
       );
     }
 
-    if (includeHousing) {
+    if (includeHousing && baseCosts.housing) {
       const housingCost =
         familySize === 1
           ? baseCosts.housing.one_bed

@@ -19,6 +19,18 @@ const scenarios = [
   { key: "luxury" as const, label: "Luxury Option" },
 ];
 
+const loadingPhrases = [
+  "Analyzing the unique cultural fabric and social atmosphere of each district",
+  "Aggregating and cross-referencing thousands of current rental market listings",
+  "Simulating daily commute routes via public transit, driving, and cycling options",
+  "Evaluating curriculum standards and admission availability at international schools",
+  "Calculating a detailed, personalized cost of living index against your income",
+  "Investigating and outlining the most viable long-term visa and residency pathways",
+  "Scoring local coworking spaces based on amenities, community reviews, and pricing",
+  "Correlating official crime statistics with hyperlocal resident safety sentiment data",
+  "Pinpointing public parks, nature reserves, and recreational green spaces nearby",
+  "Identifying popular and hidden-gem destinations for enriching weekend excursions",
+];
 
 export function SimulationModal({
   isOpen,
@@ -41,8 +53,10 @@ export function SimulationModal({
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
     {}
   );
+  const [currentPhrases, setCurrentPhrases] = useState<Record<string, string>>(
+    {}
+  );
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
-  // const [expandedScenario, setExpandedScenario] = useState<string | null>(null);
 
   const streamSimulation = useAction(api.simulations.streamSimulation);
   const generateTimeline = useAction(api.simulations.generateTimeline);
@@ -55,6 +69,24 @@ export function SimulationModal({
     }));
   }, [startCity, destinationCity]);
 
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(() => {
+      setCurrentPhrases((prev) => {
+        const newPhrases = { ...prev };
+        scenarios.forEach((scenario) => {
+          if (loadingStates[scenario.key]) {
+            newPhrases[scenario.key] =
+              loadingPhrases[Math.floor(Math.random() * loadingPhrases.length)];
+          }
+        });
+        return newPhrases;
+      });
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isRunning, loadingStates]);
 
   const formatBudgetRange = () => {
     const min = formData.budget_min ? Number(formData.budget_min) : null;
@@ -76,6 +108,7 @@ export function SimulationModal({
     setIsFormCollapsed(true);
     setResults({});
     setTimelines({});
+    setExpandedScenario(null);
 
     const budgetRange = formatBudgetRange();
 
@@ -134,6 +167,7 @@ export function SimulationModal({
     });
     setResults({});
     setTimelines({});
+    setExpandedScenario(null);
   };
 
   return (
@@ -150,7 +184,7 @@ export function SimulationModal({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-black border border-green-500/30 w-full max-w-[95vw] max-h-[90vh] relative overflow-hidden flex flex-col"
+            className="bg-black border border-green-500/30 w-full max-w-[90vw] max-h-[90vh] relative"
             onClick={(e) => e.stopPropagation()}
             style={{
               boxShadow: "0 0 40px rgba(0, 255, 0, 0.1)",
@@ -182,7 +216,7 @@ export function SimulationModal({
               </div>
             </div>
 
-            <div className="p-6 flex-1 overflow-hidden flex flex-col">
+            <div className="p-6">
               <form onSubmit={handleSubmit} className="mb-8">
                 {/* Form header with collapse toggle */}
                 <div className="flex items-center justify-between mb-4">
@@ -345,15 +379,15 @@ export function SimulationModal({
                 </div>
               </form>
 
-              <div className="flex-1 overflow-hidden">
-                <ComparisonTable 
-                  scenarios={scenarios}
-                  results={results}
-                  timelines={timelines}
-                  loadingStates={loadingStates}
-                  context={formData.context}
-                />
-              </div>
+              <ComparisonTable 
+                scenarios={scenarios}
+                results={results}
+                timelines={timelines}
+                loadingStates={loadingStates}
+                currentPhrases={currentPhrases}
+              />
+
+
             </div>
           </motion.div>
         </motion.div>
@@ -393,377 +427,68 @@ interface ComparisonTableProps {
   results: Record<string, string>;
   timelines: Record<string, TimelineData>;
   loadingStates: Record<string, boolean>;
-  context: string;
+  currentPhrases: Record<string, string>;
 }
 
 function ComparisonTable({ 
   scenarios, 
   results, 
   timelines, 
-  loadingStates,
-  context
+  loadingStates, 
+  currentPhrases 
 }: ComparisonTableProps) {
-  const handleImmigrationPartnerClick = async (scenarioKey: string) => {
-    try {
-      const response = await fetch('/api/email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'immigration_partner_introduction',
-          scenarioKey,
-          from: 'rachael@gullie.io',
-          subject: 'Immigration Partner Introduction Request',
-        }),
-      });
-      
-      if (response.ok) {
-        alert('Email introduction request sent! Our immigration partner will be in touch soon.');
-      } else {
-        alert('There was an issue sending the request. Please try again or contact support.');
-      }
-    } catch (error) {
-      console.error('Error sending immigration partner request:', error);
-      alert('There was an issue sending the request. Please try again or contact support.');
-    }
-  };
-
-  // Function to determine relevant services based on user input
-  const getRelevantServices = (context: string) => {
-    const contextLower = context.toLowerCase();
-    const services = [];
-
-    // Always show cost and time
-    services.push("cost", "time", "feasibility");
-
-    // Immigration & Visa - always relevant for relocation
-    services.push("immigration");
-
-    // Long-term Housing - always relevant
-    services.push("housing");
-
-    // Pet Relocation - if pets are mentioned
-    if (contextLower.includes('pet') || contextLower.includes('dog') || contextLower.includes('cat') || contextLower.includes('animal')) {
-      services.push("pet");
-    }
-
-    // Banking & Finance - if financial services mentioned
-    if (contextLower.includes('bank') || contextLower.includes('finance') || contextLower.includes('account') || contextLower.includes('credit')) {
-      services.push("banking");
-    }
-
-    // Healthcare - if health/medical mentioned
-    if (contextLower.includes('health') || contextLower.includes('medical') || contextLower.includes('doctor') || contextLower.includes('insurance')) {
-      services.push("healthcare");
-    }
-
-    // Transportation - if car/transport mentioned
-    if (contextLower.includes('car') || contextLower.includes('transport') || contextLower.includes('vehicle') || contextLower.includes('driving')) {
-      services.push("transportation");
-    }
-
-    // Shipping & Storage - if belongings/furniture mentioned
-    if (contextLower.includes('furniture') || contextLower.includes('belongings') || contextLower.includes('ship') || contextLower.includes('storage')) {
-      services.push("shipping");
-    }
-
-    // Education for Kids - if family/children/school mentioned
-    if (contextLower.includes('family') || contextLower.includes('child') || contextLower.includes('kid') || contextLower.includes('school') || contextLower.includes('education')) {
-      services.push("education");
-    }
-
-    // Short-term Accommodation - if temporary housing mentioned
-    if (contextLower.includes('temporary') || contextLower.includes('hotel') || contextLower.includes('short-term') || contextLower.includes('accommodation')) {
-      services.push("accommodation");
-    }
-
-    // Tax & Accounting - if tax/business mentioned
-    if (contextLower.includes('tax') || contextLower.includes('business') || contextLower.includes('accounting') || contextLower.includes('company')) {
-      services.push("tax");
-    }
-
-    // SSN & Tax ID - if work/employment mentioned
-    if (contextLower.includes('work') || contextLower.includes('job') || contextLower.includes('employ') || contextLower.includes('ssn') || contextLower.includes('tax id')) {
-      services.push("ssn");
-    }
-
-    // Lifestyle - if lifestyle/culture mentioned
-    if (contextLower.includes('lifestyle') || contextLower.includes('culture') || contextLower.includes('social') || contextLower.includes('community')) {
-      services.push("lifestyle");
-    }
-
-    return services;
-  };
-
-  const allComparisonRows = [
+  const comparisonRows = [
     { 
       label: "Total Cost", 
-      type: "cost",
       getValue: (timeline?: TimelineData) => 
-        timeline?.budget_total_usd ? `$${timeline.budget_total_usd.toLocaleString()}` : "TBD",
-      getDetails: (timeline?: TimelineData) => {
-        if (!timeline?.phases) return null;
-        const costs = timeline.phases.map(phase => 
-          phase.tasks?.reduce((sum, task) => sum + (task.cost_usd || 0), 0) || 0
-        );
-        return costs.filter(cost => cost > 0).length > 0 ? 
-          `Breakdown: ${costs.map((cost, i) => `Phase ${i+1}: $${cost.toLocaleString()}`).join(', ')}` : null;
-      }
+        timeline?.budget_total_usd ? `$${timeline.budget_total_usd.toLocaleString()}` : "TBD"
     },
     { 
       label: "Total Time", 
-      type: "time",
       getValue: (timeline?: TimelineData) => 
-        timeline?.timeframe_months ? `${timeline.timeframe_months} mo` : "TBD",
-      getDetails: (timeline?: TimelineData) => {
-        if (!timeline?.phases) return null;
-        const phaseDetails = timeline.phases.map((phase, i) => 
-          `Phase ${i+1}: ${phase.start_month || 0}-${phase.end_month || 0} mo`
-        );
-        return `Timeline: ${phaseDetails.join(' | ')}`;
-      }
+        timeline?.timeframe_months ? `${timeline.timeframe_months} mo` : "TBD"
     },
     { 
       label: "Feasibility Score", 
-      type: "score",
       getValue: (timeline?: TimelineData) => 
-        timeline?.confidence ? `${Math.round(timeline.confidence * 10)}/10` : "TBD",
-      getDetails: (timeline?: TimelineData) => {
-        const score = timeline?.confidence ? Math.round(timeline.confidence * 10) : null;
-        if (!score) return null;
-        if (score >= 8) return "High feasibility - All requirements manageable";
-        if (score >= 6) return "Moderate feasibility - Some challenges expected";
-        return "Lower feasibility - Significant challenges likely";
-      }
+        timeline?.confidence ? `${Math.round(timeline.confidence * 10)}/10` : "TBD"
     },
     { 
-      label: "Immigration & Visa", 
-      type: "immigration",
+      label: "Visa Requirements", 
       getValue: (timeline?: TimelineData, result?: string) => {
         if (!result) return "TBD";
-        const visaMatch = result.match(/visa[^.]*?([^.]*)/i);
-        return visaMatch ? visaMatch[1].substring(0, 60).trim() : "Standard process";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const immigrationSection = sections.find(section => 
-          section.toLowerCase().includes('visa') || section.toLowerCase().includes('immigration')
-        );
-        return immigrationSection ? immigrationSection.trim() : 
-          "Documentation and legal requirements vary by destination";
+        // Extract visa info from result text
+        const visaMatch = result.match(/visa[^.]*?([A-Z][^.]*)/i);
+        return visaMatch ? visaMatch[1].substring(0, 50) + "..." : "Standard process";
       }
     },
     { 
       label: "Housing Strategy", 
-      type: "housing",
       getValue: (timeline?: TimelineData, result?: string) => {
         if (!result) return "TBD";
-        const housingMatch = result.match(/housing[^.]*?([^.]*)/i);
-        return housingMatch ? housingMatch[1].substring(0, 60).trim() : "Standard rental";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const housingSection = sections.find(section => 
-          section.toLowerCase().includes('housing') || section.toLowerCase().includes('rental')
-        );
-        return housingSection ? housingSection.trim() : 
-          "Rental market analysis and housing recommendations";
+        // Extract housing info from result text
+        const housingMatch = result.match(/housing[^.]*?([A-Z][^.]*)/i);
+        return housingMatch ? housingMatch[1].substring(0, 50) + "..." : "Standard rental";
       }
     },
     { 
       label: "Pet Relocation", 
-      type: "pet",
       getValue: (timeline?: TimelineData, result?: string) => {
         if (!result) return "TBD";
-        const petMatch = result.match(/pet[^.]*?([^.]*)/i);
-        return petMatch ? petMatch[1].substring(0, 60).trim() : "Not specified";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const petSection = sections.find(section => 
-          section.toLowerCase().includes('pet') || section.toLowerCase().includes('animal')
-        );
-        return petSection ? petSection.trim() : 
-          "Pet import requirements and logistics";
+        // Extract pet info from result text
+        const petMatch = result.match(/pet[^.]*?([A-Z][^.]*)/i);
+        return petMatch ? petMatch[1].substring(0, 50) + "..." : "Not specified";
       }
     },
     { 
-      label: "Banking & Finance", 
-      type: "banking",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const bankingMatch = result.match(/bank[^.]*?([^.]*)/i);
-        return bankingMatch ? bankingMatch[1].substring(0, 60).trim() : "Standard banking setup";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const bankingSection = sections.find(section => 
-          section.toLowerCase().includes('bank') || section.toLowerCase().includes('finance') || section.toLowerCase().includes('account')
-        );
-        return bankingSection ? bankingSection.trim() : 
-          "Bank account setup and financial services";
-      }
-    },
-    { 
-      label: "Healthcare", 
-      type: "healthcare",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const healthMatch = result.match(/health[^.]*?([^.]*)/i);
-        return healthMatch ? healthMatch[1].substring(0, 60).trim() : "Health insurance setup";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const healthSection = sections.find(section => 
-          section.toLowerCase().includes('health') || section.toLowerCase().includes('medical') || section.toLowerCase().includes('insurance')
-        );
-        return healthSection ? healthSection.trim() : 
-          "Healthcare insurance and medical services setup";
-      }
-    },
-    { 
-      label: "Transportation", 
-      type: "transportation",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const transportMatch = result.match(/transport[^.]*?([^.]*)/i);
-        return transportMatch ? transportMatch[1].substring(0, 60).trim() : "Transportation setup";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const transportSection = sections.find(section => 
-          section.toLowerCase().includes('transport') || section.toLowerCase().includes('car') || section.toLowerCase().includes('vehicle')
-        );
-        return transportSection ? transportSection.trim() : 
-          "Vehicle registration and transportation setup";
-      }
-    },
-    { 
-      label: "Shipping & Storage", 
-      type: "shipping",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const shippingMatch = result.match(/ship[^.]*?([^.]*)/i);
-        return shippingMatch ? shippingMatch[1].substring(0, 60).trim() : "Shipping arrangements";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const shippingSection = sections.find(section => 
-          section.toLowerCase().includes('ship') || section.toLowerCase().includes('storage') || section.toLowerCase().includes('belongings')
-        );
-        return shippingSection ? shippingSection.trim() : 
-          "International shipping and storage solutions";
-      }
-    },
-    { 
-      label: "Education for Kids", 
-      type: "education",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const educationMatch = result.match(/school[^.]*?([^.]*)/i);
-        return educationMatch ? educationMatch[1].substring(0, 60).trim() : "School enrollment";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const educationSection = sections.find(section => 
-          section.toLowerCase().includes('school') || section.toLowerCase().includes('education') || section.toLowerCase().includes('child')
-        );
-        return educationSection ? educationSection.trim() : 
-          "School research and enrollment for children";
-      }
-    },
-    { 
-      label: "Short-term Accommodation", 
-      type: "accommodation",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const accommMatch = result.match(/temporary[^.]*?([^.]*)/i);
-        return accommMatch ? accommMatch[1].substring(0, 60).trim() : "Temporary housing";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const accommSection = sections.find(section => 
-          section.toLowerCase().includes('temporary') || section.toLowerCase().includes('hotel') || section.toLowerCase().includes('accommodation')
-        );
-        return accommSection ? accommSection.trim() : 
-          "Temporary accommodation while settling";
-      }
-    },
-    { 
-      label: "Tax & Accounting", 
-      type: "tax",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const taxMatch = result.match(/tax[^.]*?([^.]*)/i);
-        return taxMatch ? taxMatch[1].substring(0, 60).trim() : "Tax setup";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const taxSection = sections.find(section => 
-          section.toLowerCase().includes('tax') || section.toLowerCase().includes('accounting') || section.toLowerCase().includes('business')
-        );
-        return taxSection ? taxSection.trim() : 
-          "Tax registration and accounting setup";
-      }
-    },
-    { 
-      label: "SSN & Tax ID", 
-      type: "ssn",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const ssnMatch = result.match(/ssn[^.]*?([^.]*)/i);
-        return ssnMatch ? ssnMatch[1].substring(0, 60).trim() : "ID registration";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const ssnSection = sections.find(section => 
-          section.toLowerCase().includes('ssn') || section.toLowerCase().includes('tax id') || section.toLowerCase().includes('social security')
-        );
-        return ssnSection ? ssnSection.trim() : 
-          "Social Security Number and Tax ID application";
-      }
-    },
-    { 
-      label: "Lifestyle Services", 
-      type: "lifestyle",
-      getValue: (timeline?: TimelineData, result?: string) => {
-        if (!result) return "TBD";
-        const lifestyleMatch = result.match(/lifestyle[^.]*?([^.]*)/i);
-        return lifestyleMatch ? lifestyleMatch[1].substring(0, 60).trim() : "Lifestyle integration";
-      },
-      getDetails: (timeline?: TimelineData, result?: string) => {
-        if (!result) return null;
-        const sections = result.split(/[#*]+/);
-        const lifestyleSection = sections.find(section => 
-          section.toLowerCase().includes('lifestyle') || section.toLowerCase().includes('culture') || section.toLowerCase().includes('social')
-        );
-        return lifestyleSection ? lifestyleSection.trim() : 
-          "Cultural integration and lifestyle services";
-      }
+      label: "Key Phases", 
+      getValue: (timeline?: TimelineData) => 
+        timeline?.phases ? `${timeline.phases.length} phases` : "TBD"
     }
   ];
 
-  // Filter rows based on user input
-  const comparisonRows = allComparisonRows.filter(row => 
-    getRelevantServices(context).includes(row.type)
-  );
-
   return (
-    <div className="border border-green-500/30 bg-black h-full">
-      <div className="overflow-x-auto overflow-y-auto h-full max-h-[60vh]">
-        <div className="min-w-[800px]">
+    <div className="border border-green-500/30 bg-black overflow-hidden">
       {/* Header Row */}
       <div className="grid grid-cols-5 border-b border-green-500/30">
         <div className="p-4 bg-green-500/10 border-r border-green-500/30">
@@ -781,17 +506,16 @@ function ComparisonTable({
       </div>
 
       {/* Data Rows */}
-      {comparisonRows.map((row) => (
-        <div key={row.label} className="grid grid-cols-5 border-b border-green-500/30 last:border-b-0 min-h-[100px]">
-          <div className="p-4 bg-green-500/5 border-r border-green-500/30 font-medium text-gray-300 flex items-start">
-            <div className="font-semibold text-sm">{row.label}</div>
+      {comparisonRows.map((row, rowIndex) => (
+        <div key={row.label} className="grid grid-cols-5 border-b border-green-500/30 last:border-b-0">
+          <div className="p-4 bg-green-500/5 border-r border-green-500/30 font-medium text-gray-300">
+            {row.label}
           </div>
           {scenarios.map((scenario) => {
             const isLoading = loadingStates[scenario.key];
             const timeline = timelines[scenario.key];
             const result = results[scenario.key];
             const value = row.getValue(timeline, result);
-            const details = row.getDetails ? row.getDetails(timeline, result) : null;
 
             return (
               <div key={scenario.key} className="p-4 border-r border-green-500/30 last:border-r-0 text-gray-300">
@@ -809,29 +533,221 @@ function ComparisonTable({
                     <span className="text-xs text-gray-500">Loading...</span>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="font-semibold text-green-400 text-sm">{value}</div>
-                    {details && (
-                      <div className="text-xs text-gray-400 leading-relaxed">{details}</div>
-                    )}
-                    {row.type === 'immigration' && !isLoading && result && (
-                      <button
-                        onClick={() => handleImmigrationPartnerClick(scenario.key)}
-                        className="mt-2 px-3 py-1 bg-green-500/10 border border-green-500/30 text-green-400 text-xs hover:bg-green-500/20 hover:border-green-500 transition-all transform hover:scale-105 active:bg-green-500 active:text-black"
-                      >
-                        Connect me to immigration partner
-                      </button>
-                    )}
-                  </div>
+                  <span className="text-sm">{value}</span>
                 )}
               </div>
             );
           })}
         </div>
       ))}
-        </div>
-      </div>
     </div>
   );
 }
 
+interface ScenarioCardProps {
+  scenario: { key: string; label: string };
+  result?: string;
+  timeline?: TimelineData;
+  isLoading?: boolean;
+  loadingPhrase?: string;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+}
+
+function ScenarioCard({
+  scenario,
+  result,
+  timeline,
+  isLoading,
+  loadingPhrase,
+  isExpanded,
+  onToggleExpand,
+}: ScenarioCardProps) {
+  const showInitialAnimation = !result;
+  
+  return (
+    <motion.div
+      className="bg-black border border-green-500/30 p-4 relative"
+      initial={showInitialAnimation ? { opacity: 0, y: 20 } : false}
+      animate={showInitialAnimation ? { opacity: 1, y: 0 } : false}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
+
+      <div className="relative z-10">
+        <div className="items-center flex justify-between mb-4">
+          <h3 className="text-sm font-bold text-green-500 uppercase tracking-wider">
+            {scenario.label}
+          </h3>
+          {result && (
+            <button
+              onClick={onToggleExpand}
+              className="text-gray-500 hover:text-green-500 transition-colors transform hover:scale-110"
+            >
+              <svg
+                className={`w-5 h-5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        <div className={`${isExpanded ? "" : "min-h-[100px] max-h-[300px]"} overflow-y-auto transition-all duration-300`}>
+          {isLoading ? (
+            <div className="text-gray-500 animate-pulse">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex gap-1">
+                  {[...Array(3)].map((_, i) => (
+                    <span
+                      key={i}
+                      className="w-1 h-3 bg-green-500/50 animate-bounce"
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    />
+                  ))}
+                </span>
+                <span className="text-xs">{loadingPhrase}</span>
+              </div>
+            </div>
+          ) : result ? (
+            <div className="space-y-4">
+              {timeline && (
+                <div className="flex gap-2 mb-4">
+                  {timeline.budget_total_usd && (
+                    <span className="inline-flex max-h-10 items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
+                      <span>Budget</span>
+                      <span>${timeline.budget_total_usd.toLocaleString()}</span>
+                    </span>
+                  )}
+                  {timeline.timeframe_months && (
+                    <span className="inline-flex max-h-10 items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
+                      <span>Timeframe</span>
+                      <span>{timeline.timeframe_months}mo</span>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {!isExpanded && timeline?.phases && (
+                  <div className="border-t border-green-500/20 pt-4">
+                    <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+                      Timeline Breakdown
+                    </h4>
+                    <div className="space-y-3">
+                  {timeline.phases.map((phase, i) => (
+                    <div
+                      key={i}
+                      className="bg-white/5 border border-green-500/20 p-3"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold text-green-500">
+                          {phase.name}
+                        </span>
+                        {(phase.start_month !== undefined ||
+                          phase.end_month !== undefined) && (
+                          <span className="text-xs text-gray-500">
+                            {phase.start_month ?? 0}–{phase.end_month ?? ""}{" "}
+                            mo
+                          </span>
+                        )}
+                      </div>
+                      {phase.summary && (
+                        <p className="text-xs text-gray-400 mb-2">
+                          {phase.summary}
+                        </p>
+                      )}
+                      {phase.tasks && phase.tasks.length > 0 && (
+                        <div className="space-y-2">
+                          {phase.tasks.map((task, j) => (
+                            <div key={j} className="flex items-start gap-2">
+                              <div
+                                className={`w-2 h-2 mt-1 ${
+                                  task.milestone
+                                    ? "bg-green-500"
+                                    : "bg-gray-600"
+                                }`}
+                              />
+                              <div className="flex-1">
+                                <div className="text-xs text-gray-300">
+                                  {task.title}
+                                </div>
+                                {task.desc && (
+                                  <div className="text-xs text-gray-500">
+                                    {task.desc}
+                                  </div>
+                                )}
+                                <div className="flex gap-2 mt-1">
+                                  {task.cost_usd && (
+                                    <span className="text-xs text-gray-600 border border-gray-700 px-1">
+                                      ${task.cost_usd.toLocaleString()}
+                                    </span>
+                                  )}
+                                  {task.duration_weeks && (
+                                    <span className="text-xs text-gray-600 border border-gray-700 px-1">
+                                      {task.duration_weeks} wk
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="mt-4"
+                  >
+                    <div className="text-sm text-gray-300 font-mono mb-4">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({ children }) => <h1 className="text-lg font-bold text-green-500 mb-2 mt-4">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-md font-bold text-green-500 mb-2 mt-3">{children}</h2>,
+                          h3: ({ children }) => <h3 className="text-sm font-bold text-green-500 mb-1 mt-2">{children}</h3>,
+                          p: ({ children }) => <p className="text-gray-300 mb-2">{children}</p>,
+                          ul: ({ children }) => <ul className="list-disc list-inside mb-2 text-gray-300">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal list-inside mb-2 text-gray-300">{children}</ol>,
+                          li: ({ children }) => <li className="mb-1">{children}</li>,
+                          code: ({ children }) => <code className="bg-green-500/10 text-green-400 px-1 py-0.5">{children}</code>,
+                          pre: ({ children }) => <pre className="bg-green-500/10 text-green-400 p-2 mb-2 overflow-x-auto">{children}</pre>,
+                          blockquote: ({ children }) => <blockquote className="border-l-2 border-green-500 pl-3 text-gray-400 italic mb-2">{children}</blockquote>,
+                          strong: ({ children }) => <strong className="font-bold text-green-400">{children}</strong>,
+                          em: ({ children }) => <em className="italic text-gray-300">{children}</em>,
+                          hr: () => <hr className="border-green-500/30 my-4" />,
+                          a: ({ href, children }) => <a href={href} className="text-green-400 underline hover:text-green-300" target="_blank" rel="noopener noreferrer">{children}</a>
+                        }}
+                      >
+                        {result}
+                      </ReactMarkdown>
+                    </div>
+                  
+                  </motion.div>
+                )}
+              </AnimatePresence> */}
+            </div>
+          ) : (
+            <div className="text-gray-600 text-sm">Ready to simulate...</div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}

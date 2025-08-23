@@ -55,22 +55,24 @@ export function VapiProvider({ children }: { children: ReactNode }) {
     });
 
     // Message events
-    vapiInstance.on("message", (message: any) => {
+    vapiInstance.on("message", (message: Record<string, unknown>) => {
       console.log("Vapi message:", message);
       
       if (message.type === "transcript") {
         setTranscript(prev => [...prev, {
-          role: message.role,
-          text: message.transcript
+          role: message.role as string,
+          text: message.transcript as string
         }]);
       }
 
       // Mirror tool-call payloads to the browser for local wiring/testing
       if (message.type === "tool-calls") {
         try {
-          const toolCall = message.toolCall || message.toolCallList?.[0] || null;
-          const name = toolCall?.name || toolCall?.function?.name;
-          const args = toolCall?.arguments || toolCall?.function?.arguments;
+          const toolCallData = message as Record<string, unknown>;
+          const toolCall = toolCallData.toolCall as Record<string, unknown> || 
+                          (toolCallData.toolCallList as Record<string, unknown>[])?.[0] || null;
+          const name = (toolCall?.name || (toolCall?.function as Record<string, unknown>)?.name) as string | undefined;
+          const args = (toolCall?.arguments || (toolCall?.function as Record<string, unknown>)?.arguments) as unknown;
           console.log("Vapi tool-call:", name, args);
 
           if (name === "run_simulation" && typeof window !== "undefined") {

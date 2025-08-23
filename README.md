@@ -32,8 +32,6 @@ Relocation is stressful. You have to figure out visas, housing, costs, timelines
 ### Real-Time Features
 
 - Live simulation results as you talk
-- Instant PDF generation
-- Email summaries sent to your inbox
 - Progress tracking across sessions
 
 ## Tech Stack
@@ -55,7 +53,8 @@ The voice-first approach is key - when you're stressed about moving to another c
 We're working on:
 
 - Better PDF generation
-- Faster voice response times
+- Faster voice response times and accurate, uninterrupted tool calls
+- Real-time web search power by [Exa](https://exa.ai)
 - More detailed cost breakdowns
 - Integration with actual relocation services
 

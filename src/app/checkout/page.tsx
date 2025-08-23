@@ -38,7 +38,7 @@ export default function CheckoutPage() {
     }
 
     setInitiatingCheckout(true);
-    
+
     try {
       // Call the API to create a Polar checkout session
       const response = await fetch("/api/create-checkout", {
@@ -47,10 +47,14 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID || "c66ea195-003c-44b5-b34a-ad16c02408e8",
+          productId:
+            process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID ||
+            "c66ea195-003c-44b5-b34a-ad16c02408e8",
           customerId: user.id,
           customerEmail: user.email,
-          customerName: user.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user.email,
+          customerName: user.firstName
+            ? `${user.firstName} ${user.lastName || ""}`.trim()
+            : user.email,
         }),
       });
 
@@ -59,7 +63,7 @@ export default function CheckoutPage() {
       }
 
       const { checkoutUrl } = await response.json();
-      
+
       // Redirect to Polar checkout
       window.location.href = checkoutUrl;
     } catch (error) {
@@ -81,12 +85,26 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-electric mb-4">Sign In Required</h1>
-          <p className="text-gray-400 mb-8">Please sign in to continue with your subscription</p>
+          <h1 className="text-3xl font-bold text-electric mb-4">
+            Sign In Required
+          </h1>
+          <p className="text-gray-400 mb-8">
+            Please sign in to continue with your subscription
+          </p>
           <Link href="/">
             <motion.button
-              whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
-              whileTap={{ scale: 0.95, backgroundColor: "#00ffff", color: "#000000", transition: { duration: 0 } }}
+              whileHover={{
+                scale: 1.05,
+                x: 2,
+                y: -2,
+                transition: { duration: 0.05 },
+              }}
+              whileTap={{
+                scale: 0.95,
+                backgroundColor: "#00ffff",
+                color: "#000000",
+                transition: { duration: 0 },
+              }}
               className="px-6 py-3 border border-electric text-electric"
             >
               Go to Home
@@ -103,44 +121,72 @@ export default function CheckoutPage() {
         <h1 className="text-4xl font-bold text-electric mb-8 text-center">
           Upgrade to Premium
         </h1>
-        
+
         <div className="border border-electric/30 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">Premium Features</h2>
-          
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Premium Features
+          </h2>
+
           <ul className="space-y-4 mb-8">
             <li className="flex items-start">
               <span className="text-electric mr-3">▸</span>
-              <span className="text-gray-300">Unlimited AI-powered relocation consultations</span>
+              <span className="text-gray-200">
+                Unlimited AI-powered relocation consultations
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-electric mr-3">▸</span>
-              <span className="text-gray-300">Priority visa processing guidance</span>
+              <span className="text-gray-200">
+                Priority visa processing guidance
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-electric mr-3">▸</span>
-              <span className="text-gray-300">Comprehensive PDF reports for all destinations</span>
+              <span className="text-gray-200">
+                Comprehensive PDF reports for all destinations
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-electric mr-3">▸</span>
-              <span className="text-gray-300">Real-time flight and accommodation tracking</span>
+              <span className="text-gray-200">
+                Real-time flight and accommodation tracking
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-electric mr-3">▸</span>
-              <span className="text-gray-300">24/7 voice assistant support</span>
+              <span className="text-gray-200">
+                24/7 voice assistant support
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-electric mr-3">▸</span>
-              <span className="text-gray-300">Personalized relocation timeline planning</span>
+              <span className="text-gray-200">
+                Personalized relocation timeline planning
+              </span>
             </li>
           </ul>
-          
+
           <div className="text-center border-t border-electric/20 pt-6">
-            <div className="text-3xl font-bold text-electric mb-2">$990/month</div>
-            <p className="text-gray-400 text-sm mb-6">Cancel anytime, no hidden fees</p>
-            
+            <div className="text-3xl font-bold text-electric mb-2">
+              $990/month
+            </div>
+            <p className="text-gray-400 text-sm mb-6">
+              Cancel anytime, no hidden fees
+            </p>
+
             <motion.button
-              whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
-              whileTap={{ scale: 0.95, backgroundColor: "#00ffff", color: "#000000", transition: { duration: 0 } }}
+              whileHover={{
+                scale: 1.05,
+                x: 2,
+                y: -2,
+                transition: { duration: 0.05 },
+              }}
+              whileTap={{
+                scale: 0.95,
+                backgroundColor: "#00ffff",
+                color: "#000000",
+                transition: { duration: 0 },
+              }}
               className="w-full px-6 py-3 border border-electric text-electric disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleCheckout}
               disabled={initiatingCheckout}
@@ -149,7 +195,7 @@ export default function CheckoutPage() {
             </motion.button>
           </div>
         </div>
-        
+
         <div className="text-center">
           <p className="text-gray-400 text-sm">
             Secure payment processed by Polar

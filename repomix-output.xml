@@ -13720,7 +13720,7 @@ export function LandingHero({
               />
             </h3>
             <p className="text-sm text-gray-400">
-              $990/month until your visa is secured, first month free
+              $990/month until your relocation is completed, first month free
             </p>
           </div>
         </div>

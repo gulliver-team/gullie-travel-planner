@@ -4,6 +4,7 @@ import { VapiConversationIndicator } from "./VapiConversationIndicator";
 import { useVapi } from "@/providers/VapiProvider";
 import DecryptedText from "./DecryptedText";
 import { motion } from "motion/react";
+import { useState } from "react";
 
 interface LandingHeroProps {
   userName: string;
@@ -21,6 +22,7 @@ export function LandingHero({
   onOpenSimulation,
 }: LandingHeroProps) {
   const { startCall, endCall, isCallActive } = useVapi();
+  const [activeTab, setActiveTab] = useState<'voice' | 'simulation'>('voice');
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -78,7 +80,7 @@ export function LandingHero({
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               placeholder="John Doe"
-              className="w-full px-6 py-4 text-lg bg-gray-900 border border-gray-700 focus:border-green-500 transition-colors"
+              className="w-full px-6 py-4 text-lg bg-black border border-green-500/30 text-green-500 placeholder-gray-600 focus:border-green-500 focus:outline-none transition-colors"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !isLoading) onStart();
               }}
@@ -86,70 +88,73 @@ export function LandingHero({
             />
           </div>
 
-          {/* Action Buttons - Direct triggers */}
-          <div className="w-full flex gap-4">
+          {/* Tab Selection - Direct triggers */}
+          <div className="w-full">
             {!isCallActive ? (
-              <>
+              <div className="flex gap-0 border border-green-500/30">
                 <motion.button
-                  onClick={() => startCall(userName || "Guest")}
-                  className="flex-1 px-6 py-4 bg-gray-400 text-black 
-                             font-bold uppercase tracking-wider text-xl border border-green-400"
-                  style={{
-                    boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
+                  onClick={() => {
+                    setActiveTab('voice');
+                    startCall(userName || "Guest");
                   }}
+                  className={`flex-1 px-6 py-4 font-bold uppercase tracking-wider text-lg transition-all ${
+                    activeTab === 'voice' 
+                      ? 'bg-green-500 text-black border-r border-green-500' 
+                      : 'bg-black text-green-500 border-r border-green-500/30 hover:bg-green-500/10'
+                  }`}
                   whileHover={{
-                    scaleX: 1.05,
-                    scaleY: 1.05,
-                    backgroundColor: "#16a34a",
+                    x: activeTab === 'voice' ? 0 : 2,
+                    y: activeTab === 'voice' ? 0 : -2,
                     transition: { duration: 0.05 },
                   }}
                   whileTap={{
-                    backgroundColor: "#ffffff",
+                    scale: 0.95,
+                    backgroundColor: "#00ff00",
                     color: "#000000",
                     transition: { duration: 0 },
                   }}
                 >
-                  🎤 Start Voice Consultation
+                  🎤 Voice Consultation
                 </motion.button>
                 <motion.button
-                  onClick={onOpenSimulation}
-                  className="flex-1 px-6 py-4 bg-gray-400 text-black 
-                             font-bold uppercase tracking-wider text-xl border border-green-400"
-                  style={{
-                    boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
+                  onClick={() => {
+                    setActiveTab('simulation');
+                    onOpenSimulation();
                   }}
+                  className={`flex-1 px-6 py-4 font-bold uppercase tracking-wider text-lg transition-all ${
+                    activeTab === 'simulation' 
+                      ? 'bg-green-500 text-black' 
+                      : 'bg-black text-green-500 hover:bg-green-500/10'
+                  }`}
                   whileHover={{
-                    scaleX: 1.05,
-                    scaleY: 1.05,
-                    backgroundColor: "#16a34a",
+                    x: activeTab === 'simulation' ? 0 : 2,
+                    y: activeTab === 'simulation' ? 0 : -2,
                     transition: { duration: 0.05 },
                   }}
                   whileTap={{
-                    backgroundColor: "#ffffff",
+                    scale: 0.95,
+                    backgroundColor: "#00ff00",
                     color: "#000000",
                     transition: { duration: 0 },
                   }}
                 >
                   📊 Run Simulations
                 </motion.button>
-              </>
+              </div>
             ) : (
               <motion.button
                 onClick={endCall}
-                className="flex-1 px-6 py-4 bg-red-500 text-white 
-                           font-bold uppercase tracking-wider text-2xl border border-red-400"
-                style={{
-                  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
-                }}
+                className="w-full px-6 py-4 bg-black text-red-500 
+                           font-bold uppercase tracking-wider text-xl border border-red-500"
                 whileHover={{
-                  scaleX: 1.05,
-                  scaleY: 1.05,
-                  backgroundColor: "#dc2626",
+                  x: 2,
+                  y: -2,
                   transition: { duration: 0.05 },
                 }}
                 whileTap={{
-                  backgroundColor: "#ffffff",
-                  color: "#000000",
+                  scale: 0.95,
+                  backgroundColor: "#ff0000",
+                  color: "#ffffff",
                   transition: { duration: 0 },
                 }}
               >
@@ -229,7 +234,7 @@ export function LandingHero({
               />
             </h3>
             <p className="text-sm text-gray-400">
-              $990/month until your visa is secured, first month free
+              $990/month until your relocation is completed, first month free
             </p>
           </div>
         </div>

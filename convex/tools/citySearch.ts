@@ -100,7 +100,7 @@ export const searchWithExa = internalAction({
       validatedInput;
 
     const exaApiKey = process.env.EXA_API_KEY;
-    const openaiApiKey = process.env.OPEN_AI_API;
+    const openaiApiKey = process.env.OPENAI_API_KEY;
 
     if (!exaApiKey || !openaiApiKey) {
       throw new Error("Missing API keys");

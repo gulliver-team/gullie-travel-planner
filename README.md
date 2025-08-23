@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gullie - Voice-Powered Relocation Planning
 
-## Getting Started
+> Built in 24 hours at YC Office with the team.
 
-First, run the development server:
+## What We Built
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Relocation is stressful. You have to figure out visas, housing, costs, timelines - it's overwhelming. We built Gullie to be the voice you can talk to when you're feeling lost in the process.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Gullie is a voice AI that helps you plan relocations.** Instead of spending hours googling and stressing, you just talk to it. It understands your situation, gives you realistic scenarios, and helps you make decisions.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How It Works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Talk to Gullie** - Start a voice conversation (web or phone)
+2. **Share your situation** - Where you're moving from/to, budget, timeline
+3. **Get 4 scenarios** - Budget, balanced, fast-track, and luxury options
+4. **Review your plan** - (next in plan) PDF report and email summary with next steps
 
-## Learn More
+## What We Actually Built
 
-To learn more about Next.js, take a look at the following resources:
+### Voice Interface
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Voice conversations using Vapi.ai
+- Phone call support (because sometimes you just want to talk)
+- Real-time conversation tracking
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Relocation Engine
 
-## Deploy on Vercel
+- Simulated relocation scenarios using GPT-4
+- Cost estimates and timeline breakdowns
+- 4 different approaches (cheapest, balanced, fastest, luxury)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Real-Time Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Live simulation results as you talk
+- Instant PDF generation
+- Email summaries sent to your inbox
+- Progress tracking across sessions
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Backend**: Convex (real-time database), OpenAI API
+- **Voice**: Vapi.ai for phone/web calls
+- **Deployment**: Vercel
+- **Styling**: Tailwind CSS with custom animations
+
+## Why This Matters
+
+People miss opportunities because relocation seems impossible. We're making it approachable by giving you a voice to talk to instead of endless forms and research.
+
+The voice-first approach is key - when you're stressed about moving to another country, typing into a form feels cold. Talking to someone (even an AI) feels more human.
+
+## What's Next
+
+We're working on:
+
+- Better PDF generation
+- Faster voice response times
+- More detailed cost breakdowns
+- Integration with actual relocation services
+
+## Try It
+
+1. Visit the site
+2. Start talking to Gullie
+3. Tell it where you want to move
+4. Get your personalized relocation plan
+
+---
+
+_Built in a YC hackathon because relocation shouldn't be this hard._

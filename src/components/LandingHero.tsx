@@ -54,7 +54,7 @@ export function LandingHero({
           </p>
           <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mt-4">
             <DecryptedText
-              text="Navigate global relocation with confidence. Get personalized visa guidance, flight options, housing solutions, and comprehensive support."
+              text="Find the optimal relocation plan to move from one city to another"
               animateOn="view"
               speed={20}
               sequential={true}
@@ -208,7 +208,7 @@ export function LandingHero({
               />
             </h3>
             <p className="text-sm text-gray-400">
-              $990/month until your relocation is completed, first month free
+              $99/month until your relocation is completed, first month free
             </p>
           </div>
         </div>

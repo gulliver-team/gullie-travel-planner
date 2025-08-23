@@ -47,9 +47,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          productId:
-            process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID ||
-            "c66ea195-003c-44b5-b34a-ad16c02408e8",
+          productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID,
           customerId: user.id,
           customerEmail: user.email,
           customerName: user.firstName

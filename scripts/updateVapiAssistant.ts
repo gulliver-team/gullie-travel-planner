@@ -87,17 +87,18 @@ const tools = [
     function: {
       name: "search_relocation_options",
       description:
-        "Search for relocation options when user provides origin and destination cities",
+        "Search for relocation options as soon as user provides origin and destination cities",
       parameters: {
         type: "object",
         properties: {
           origin_city: {
             type: "string",
-            description: "The city the user is moving from",
+            description:
+              "The city the user holds citizenship in, if it's different from current living address.",
           },
           origin_country: {
             type: "string",
-            description: "The country the user is moving from",
+            description: "The country the user holds citizenship in",
           },
           destination_city: {
             type: "string",
@@ -153,10 +154,6 @@ const tools = [
             type: "string",
             description: "Destination country",
           },
-          visa_type: {
-            type: "string",
-            description: "Specific visa type (optional)",
-          },
         },
         required: ["origin_country", "destination_country"],
       },
@@ -180,7 +177,8 @@ const tools = [
     type: "function",
     function: {
       name: "estimate_relocation_costs",
-      description: "Calculate detailed cost breakdown for relocation",
+      description:
+        "Calculate detailed cost breakdown for relocation. All required parameter should be asked by LLM.",
       parameters: {
         type: "object",
         properties: {
@@ -205,7 +203,13 @@ const tools = [
             description: "Number of people relocating",
           },
         },
-        required: ["destination_city"],
+        required: [
+          "destination_city",
+          "include_flight",
+          "include_housing",
+          "include_moving",
+          "family_size",
+        ],
       },
     },
     server: {

@@ -31,8 +31,6 @@ export const searchRelocationOptions = internalMutation({
     const { originCity, originCountry, destinationCity, destinationCountry } =
       validatedInput;
 
-    // Check if we have cached results
-    const cacheKey = `${originCountry}-${destinationCountry}-${originCity}-${destinationCity}`;
     const existing = await ctx.db
       .query("cities")
       .filter((q) =>

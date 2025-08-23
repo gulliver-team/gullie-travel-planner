@@ -34,6 +34,7 @@ import type * as schemas_subscription from "../schemas/subscription.js";
 import type * as schemas_user from "../schemas/user.js";
 import type * as schemas_visa from "../schemas/visa.js";
 import type * as schemas_zod_schemas from "../schemas/zod_schemas.js";
+import type * as simulations from "../simulations.js";
 import type * as storage from "../storage.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as tools_citySearch from "../tools/citySearch.js";
@@ -75,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   "schemas/user": typeof schemas_user;
   "schemas/visa": typeof schemas_visa;
   "schemas/zod_schemas": typeof schemas_zod_schemas;
+  simulations: typeof simulations;
   storage: typeof storage;
   subscriptions: typeof subscriptions;
   "tools/citySearch": typeof tools_citySearch;

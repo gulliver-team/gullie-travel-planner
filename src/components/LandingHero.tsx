@@ -10,6 +10,7 @@ interface LandingHeroProps {
   setUserName: (name: string) => void;
   onStart: () => void;
   isLoading?: boolean;
+  onOpenSimulation: () => void;
 }
 
 export function LandingHero({
@@ -17,6 +18,7 @@ export function LandingHero({
   setUserName,
   onStart,
   isLoading,
+  onOpenSimulation,
 }: LandingHeroProps) {
   const { startCall, endCall, isCallActive } = useVapi();
 
@@ -84,30 +86,53 @@ export function LandingHero({
             />
           </div>
 
-          {/* Voice Call Controls */}
+          {/* Action Buttons - Direct triggers */}
           <div className="w-full flex gap-4">
             {!isCallActive ? (
-              <motion.button
-                onClick={() => startCall(userName || "Guest")}
-                className="flex-1 px-6 py-4 bg-gray-400 text-black 
-                           font-bold uppercase tracking-wider text-2xl border border-green-400"
-                style={{
-                  boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
-                }}
-                whileHover={{
-                  scaleX: 1.05,
-                  scaleY: 1.05,
-                  backgroundColor: "#16a34a",
-                  transition: { duration: 0.05 },
-                }}
-                whileTap={{
-                  backgroundColor: "#ffffff",
-                  color: "#000000",
-                  transition: { duration: 0 },
-                }}
-              >
-                🎤 Start Voice Consultation
-              </motion.button>
+              <>
+                <motion.button
+                  onClick={() => startCall(userName || "Guest")}
+                  className="flex-1 px-6 py-4 bg-gray-400 text-black 
+                             font-bold uppercase tracking-wider text-xl border border-green-400"
+                  style={{
+                    boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
+                  }}
+                  whileHover={{
+                    scaleX: 1.05,
+                    scaleY: 1.05,
+                    backgroundColor: "#16a34a",
+                    transition: { duration: 0.05 },
+                  }}
+                  whileTap={{
+                    backgroundColor: "#ffffff",
+                    color: "#000000",
+                    transition: { duration: 0 },
+                  }}
+                >
+                  🎤 Start Voice Consultation
+                </motion.button>
+                <motion.button
+                  onClick={onOpenSimulation}
+                  className="flex-1 px-6 py-4 bg-gray-400 text-black 
+                             font-bold uppercase tracking-wider text-xl border border-green-400"
+                  style={{
+                    boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
+                  }}
+                  whileHover={{
+                    scaleX: 1.05,
+                    scaleY: 1.05,
+                    backgroundColor: "#16a34a",
+                    transition: { duration: 0.05 },
+                  }}
+                  whileTap={{
+                    backgroundColor: "#ffffff",
+                    color: "#000000",
+                    transition: { duration: 0 },
+                  }}
+                >
+                  📊 Run Simulations
+                </motion.button>
+              </>
             ) : (
               <motion.button
                 onClick={endCall}

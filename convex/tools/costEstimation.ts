@@ -73,7 +73,7 @@ export const analyzeWithOpenAI = internalAction({
       familySize,
     } = validatedInput;
 
-    const openaiApiKey = process.env.OPEN_AI_API;
+    const openaiApiKey = process.env.OPENAI_API_KEY;
     const exaApiKey = process.env.EXA_API_KEY;
 
     if (!openaiApiKey) {

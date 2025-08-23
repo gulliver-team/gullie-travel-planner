@@ -95,13 +95,14 @@ export default function AccountPage() {
           </p>
           <Link href="/">
             <motion.button
-              whileHover={{ scale: 1.05, x: 2, y: -2 }}
+              whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
               whileTap={{
                 scale: 0.95,
                 backgroundColor: "#00ffff",
                 color: "#000000",
+                transition: { duration: 0 }
               }}
-              className="px-6 py-3 border border-electric text-electric hover:bg-electric/10 transition-all"
+              className="px-6 py-3 border border-electric text-electric"
             >
               Go to Home
             </motion.button>
@@ -125,13 +126,14 @@ export default function AccountPage() {
             </h2>
             {!editing && (
               <motion.button
-                whileHover={{ scale: 1.05, x: 2, y: -2 }}
+                whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
                 whileTap={{
                   scale: 0.95,
                   backgroundColor: "#00ffff",
                   color: "#000000",
+                  transition: { duration: 0 }
                 }}
-                className="px-4 py-2 border border-electric text-electric hover:bg-electric/10 transition-all"
+                className="px-4 py-2 border border-electric text-electric"
                 onClick={() => setEditing(true)}
               >
                 Edit Profile
@@ -209,13 +211,14 @@ export default function AccountPage() {
           {editing && (
             <div className="flex gap-4 mt-6">
               <motion.button
-                whileHover={{ scale: 1.05, x: 2, y: -2 }}
+                whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
                 whileTap={{
                   scale: 0.95,
                   backgroundColor: "#00ffff",
                   color: "#000000",
+                  transition: { duration: 0 }
                 }}
-                className="px-6 py-3 border border-electric text-electric hover:bg-electric/10 transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 border border-electric text-electric disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSave}
                 disabled={saving}
               >
@@ -223,9 +226,9 @@ export default function AccountPage() {
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.05, x: 2, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 border border-gray-500 text-gray-500 hover:bg-gray-500/10 transition-all duration-100"
+                whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
+                whileTap={{ scale: 0.95, transition: { duration: 0 } }}
+                className="px-6 py-3 border border-gray-500 text-gray-500"
                 onClick={() => {
                   setEditing(false);
                   setMessage("");

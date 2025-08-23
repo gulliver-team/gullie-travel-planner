@@ -55,7 +55,7 @@ export function VapiProvider({ children }: { children: ReactNode }) {
     });
 
     // Message events
-    vapiInstance.on("message", (message) => {
+    vapiInstance.on("message", (message: any) => {
       console.log("Vapi message:", message);
       
       if (message.type === "transcript") {
@@ -63,6 +63,22 @@ export function VapiProvider({ children }: { children: ReactNode }) {
           role: message.role,
           text: message.transcript
         }]);
+      }
+
+      // Mirror tool-call payloads to the browser for local wiring/testing
+      if (message.type === "tool-calls") {
+        try {
+          const toolCall = message.toolCall || message.toolCallList?.[0] || null;
+          const name = toolCall?.name || toolCall?.function?.name;
+          const args = toolCall?.arguments || toolCall?.function?.arguments;
+          console.log("Vapi tool-call:", name, args);
+
+          if (name === "run_simulation" && typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("vapi:run_simulation", { detail: args }));
+          }
+        } catch (err) {
+          console.error("Failed handling tool-calls message:", err);
+        }
       }
     });
 

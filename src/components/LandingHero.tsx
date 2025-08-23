@@ -210,6 +210,44 @@ export function LandingHero({
         </div>
 
         {/* Footer Info */}
+        <div className="text-center gap-4 flex flex-col text-xs text-gray-600">
+          <p>
+            We analyze cheapest, fastest, most expensive, and most convenient
+            options
+          </p>
+          <p>Personalized PDF reports delivered to your email</p>
+          <div className="mt-4 pt-4 border-t border-gray-800">
+            <p className="text-green-400 text-xl font-bold">
+              📞 Call us directly: <DecryptedText
+                text="+1 (628) 241 4121"
+                speed={50}
+                characters="0123456789+-() "
+                useOriginalCharsOnly={true}
+                className="text-green-400"
+                encryptedClassName="text-green-700"
+              />
+            </p>
+            <p className="text-gray-500 text-xs mt-1">
+              Available 24/7 for voice consultations
+            </p>
+          </div>
+        </div>
+
+        {/* Simulations IFrame Preview */}
+        <div className="w-full max-w-6xl mt-10">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-200">Simulations Preview</h2>
+            <span className="text-xs text-gray-500">Loaded from localhost:8080</span>
+          </div>
+          <div className="border border-gray-800">
+            <iframe
+              title="Simulations"
+              src={process.env.NEXT_PUBLIC_SIMULATIONS_URL || "http://localhost:8080"}
+              className="w-full"
+              style={{ height: "900px", backgroundColor: "#0a0b0d" }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

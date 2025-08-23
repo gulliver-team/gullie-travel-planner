@@ -31,6 +31,29 @@ const tools: VapiTool[] = [
   {
     type: "function",
     function: {
+      name: "run_simulation",
+      description:
+        "Populate and trigger the local simulations run with collected relocation inputs.",
+      parameters: {
+        type: "object",
+        properties: {
+          start_city: { type: "string", description: "Origin city (e.g., 'San Francisco, CA, USA')" },
+          destination_city: { type: "string", description: "Destination city (e.g., 'Lisbon, Portugal')" },
+          budget_min: { type: "number", description: "Minimum budget in USD" },
+          budget_max: { type: "number", description: "Maximum budget in USD" },
+          move_month: { type: "string", description: "Ideal move month in YYYY-MM" },
+          context: { type: "string", description: "Additional context and constraints" },
+        },
+        required: ["start_city", "destination_city"],
+      },
+    },
+    server: {
+      url: `${CONVEX_SITE_URL}/tools/run_simulation`,
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "search_relocation_options",
       description: "Search for visa and relocation options between two countries. Returns 4 options: budget, express, balanced, and premium relocation plans with costs and timelines.",
       parameters: {

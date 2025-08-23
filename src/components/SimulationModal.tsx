@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 interface SimulationModalProps {
   isOpen: boolean;

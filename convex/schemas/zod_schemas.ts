@@ -305,30 +305,50 @@ export const CostEstimationInputSchema = z.object({
 });
 
 export const BaseCostsSchema = z.object({
-  flight: z.object({
-    economy: z.number().positive(),
-    premium: z.number().positive(),
-    business: z.number().positive(),
-  }),
-  housing: z.object({
-    shared: z.number().positive(),
-    one_bed: z.number().positive(),
-    two_bed: z.number().positive(),
-    family: z.number().positive(),
-  }),
-  moving: z.object({
-    minimal: z.number().positive(),
-    standard: z.number().positive(),
-    full: z.number().positive(),
-    premium: z.number().positive(),
-  }),
-  setup: z.object({
-    utilities: z.number().positive(),
-    deposits: z.number().positive(),
-    initial_groceries: z.number().positive(),
-    transport_setup: z.number().positive(),
-    phone_internet: z.number().positive(),
-  }),
+  flight: z
+    .object({
+      economy: z.number().positive(),
+      premium: z.number().positive(),
+      business: z.number().positive(),
+    })
+    .describe("Flight costs"),
+  housing: z
+    .optional(
+      z.object({
+        shared: z.number().positive(),
+        one_bed: z.number().positive(),
+        two_bed: z.number().positive(),
+        family: z.number().positive(),
+      })
+    )
+    .describe("Housing costs"),
+  pet_transport: z
+    .optional(
+      z.object({
+        minimal: z.number().positive(),
+        standard: z.number().positive(),
+        full: z.number().positive(),
+        premium: z.number().positive(),
+      })
+    )
+    .describe("Pet transport costs"),
+  moving: z
+    .object({
+      minimal: z.number().positive(),
+      standard: z.number().positive(),
+      full: z.number().positive(),
+      premium: z.number().positive(),
+    })
+    .describe("Moving costs (furniture)"),
+  setup: z
+    .object({
+      utilities: z.number().positive(),
+      deposits: z.number().positive(),
+      initial_groceries: z.number().positive(),
+      transport_setup: z.number().positive(),
+      phone_internet: z.number().positive(),
+    })
+    .describe("Setup costs"),
 });
 
 export const CostBreakdownSchema = z.object({

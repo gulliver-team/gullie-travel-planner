@@ -12,7 +12,7 @@ const SCENARIO_LABELS = {
 type ScenarioType = keyof typeof SCENARIO_LABELS;
 
 function buildMessages(
-  payload: {
+  _payload: {
     start_city?: string;
     destination_city?: string;
     budget_range?: string;
@@ -21,12 +21,13 @@ function buildMessages(
   },
   scenario: ScenarioType
 ) {
-  const start = payload.start_city?.trim() || "";
-  const dest = payload.destination_city?.trim() || "";
-  const budget = payload.budget_range?.trim() || "";
-  const month = payload.move_month?.trim() || "";
-  const context = payload.context?.trim() || "";
-
+  const payload = {
+    start_city: _payload.start_city?.trim() || "",
+    destination_city: _payload.destination_city?.trim() || "",
+    budget_range: _payload.budget_range?.trim() || "",
+    move_month: _payload.move_month?.trim() || "",
+    context: _payload.context?.trim() || "",
+  };
   const scenarioLabel = SCENARIO_LABELS[scenario];
 
   const scenarioBias = {
@@ -46,11 +47,11 @@ You are an expert relocation logistics simulator. Your goal is to generate one d
 
 CORE VARIABLES (INPUTS)
 - Profile: Not provided explicitly; infer a reasonable baseline family profile unless context specifies otherwise.
-- Origin: ${start}
-- Destination: ${dest}
-- Budget Range: ${budget}
-- Ideal Move Month: ${month}
-- Additional Context: ${context}
+- Origin: ${payload.start_city}
+- Destination: ${payload.destination_city}
+- Budget Range: ${payload.budget_range}
+- Ideal Move Month: ${payload.move_month}
+- Additional Context: ${payload.context}
 
 SIMULATION LOGIC (PROCESS)
 For the destination, simulate the full relocation process and estimate both cost and time for:
@@ -67,14 +68,15 @@ Guidance: ${scenarioBias}
 
 OUTPUT FORMAT
 Return a concise Markdown block containing:
-- A short headline for the scenario
-- Bullet summaries for each factor with concrete estimates
+- ${scenarioLabel}
+- Bullet summaries for each factor with concrete estimates but each o
 - Total Estimated Cost (USD) and Estimated Timeline (months)
 - One major pro and one major con
 - A feasibility score (1-10)
 `.trim();
 
-  const user = "Using the inputs above, produce the simulation. Be concrete and avoid filler.";
+  const user =
+    "Using the inputs above, produce the simulation. Be concrete and avoid filler.";
 
   return [
     { role: "system" as const, content: system },

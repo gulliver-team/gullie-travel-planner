@@ -22,13 +22,13 @@ export function LandingHero({
   onOpenSimulation,
 }: LandingHeroProps) {
   const { startCall, endCall, isCallActive } = useVapi();
-  const [activeTab, setActiveTab] = useState<'voice' | 'simulation'>('voice');
+  const [activeTab, setActiveTab] = useState<"voice" | "simulation">("voice");
 
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="flex flex-col items-center justify-center gap-6">
         {/* Header Section */}
-        <div className="text-center py-10 flex flex-col items-center space-y-3">
+        <div className="text-center py-6 flex flex-col items-center space-y-3">
           <h1 className="text-2xl md:text-8xl font-bold">
             <DecryptedText
               text="GULLIE"
@@ -94,17 +94,17 @@ export function LandingHero({
               <div className="flex gap-0 border border-green-500/30">
                 <motion.button
                   onClick={() => {
-                    setActiveTab('voice');
+                    setActiveTab("voice");
                     startCall(userName || "Guest");
                   }}
                   className={`flex-1 px-6 py-4 font-bold uppercase tracking-wider text-lg transition-all ${
-                    activeTab === 'voice' 
-                      ? 'bg-green-500 text-black border-r border-green-500' 
-                      : 'bg-black text-green-500 border-r border-green-500/30 hover:bg-green-500/10'
+                    activeTab === "voice"
+                      ? "bg-green-500 text-black border-r border-green-500"
+                      : "bg-black text-green-500 border-r border-green-500/30 hover:bg-green-500/10"
                   }`}
                   whileHover={{
-                    x: activeTab === 'voice' ? 0 : 2,
-                    y: activeTab === 'voice' ? 0 : -2,
+                    x: activeTab === "voice" ? 0 : 2,
+                    y: activeTab === "voice" ? 0 : -2,
                     transition: { duration: 0.05 },
                   }}
                   whileTap={{
@@ -118,17 +118,17 @@ export function LandingHero({
                 </motion.button>
                 <motion.button
                   onClick={() => {
-                    setActiveTab('simulation');
+                    setActiveTab("simulation");
                     onOpenSimulation();
                   }}
                   className={`flex-1 px-6 py-4 font-bold uppercase tracking-wider text-lg transition-all ${
-                    activeTab === 'simulation' 
-                      ? 'bg-green-500 text-black' 
-                      : 'bg-black text-green-500 hover:bg-green-500/10'
+                    activeTab === "simulation"
+                      ? "bg-green-500 text-black"
+                      : "bg-black text-green-500 hover:bg-green-500/10"
                   }`}
                   whileHover={{
-                    x: activeTab === 'simulation' ? 0 : 2,
-                    y: activeTab === 'simulation' ? 0 : -2,
+                    x: activeTab === "simulation" ? 0 : 2,
+                    y: activeTab === "simulation" ? 0 : -2,
                     transition: { duration: 0.05 },
                   }}
                   whileTap={{
@@ -163,7 +163,6 @@ export function LandingHero({
             )}
           </div>
           <div className="text-center gap-4 flex flex-col text-xs text-gray-600">
-        
             <div className="mt-4 pt-4 border-t border-gray-800">
               <p className="text-green-400 text-xl font-bold">
                 📞 Call us directly:{" "}
@@ -231,30 +230,6 @@ export function LandingHero({
             </h3>
             <p className="text-sm text-gray-400">
               $990/month until your relocation is completed, first month free
-            </p>
-          </div>
-        </div>
-
-        {/* Footer Info */}
-        <div className="text-center gap-4 flex flex-col text-xs text-gray-600">
-          <p>
-            We analyze cheapest, fastest, most expensive, and most convenient
-            options
-          </p>
-          <p>Personalized PDF reports delivered to your email</p>
-          <div className="mt-4 pt-4 border-t border-gray-800">
-            <p className="text-green-400 text-xl font-bold">
-              📞 Call us directly: <DecryptedText
-                text="+1 (628) 241 4121"
-                speed={50}
-                characters="0123456789+-() "
-                useOriginalCharsOnly={true}
-                className="text-green-400"
-                encryptedClassName="text-green-700"
-              />
-            </p>
-            <p className="text-gray-500 text-xs mt-1">
-              Available 24/7 for voice consultations
             </p>
           </div>
         </div>

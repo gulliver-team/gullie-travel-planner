@@ -67,27 +67,6 @@ export function LandingHero({
 
         {/* Input Section */}
         <div className="w-full max-w-xl gap-8 flex flex-col items-center">
-          <div className="gap-4 flex flex-col items-center">
-            <label
-              htmlFor="name"
-              className="block text-2xl font-semibold text-gray-50"
-            >
-              Enter your name to begin
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="John Doe"
-              className="w-full px-6 py-4 text-lg bg-black border border-green-500/30 text-green-500 placeholder-gray-600 focus:border-green-500 focus:outline-none transition-colors"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !isLoading) onStart();
-              }}
-              disabled={isLoading}
-            />
-          </div>
-
           {/* Tab Selection - Direct triggers */}
           <div className="w-full">
             {!isCallActive ? (

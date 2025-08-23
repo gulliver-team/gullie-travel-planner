@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { action, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { OpenAI } from "openai";
 
 const SCENARIO_LABELS = {
@@ -84,6 +85,99 @@ Return a concise Markdown block containing:
   ];
 }
 
+function buildMessagesWithSearchData(
+  _payload: {
+    start_city?: string;
+    destination_city?: string;
+    budget_range?: string;
+    move_month?: string;
+    context?: string;
+  },
+  scenario: ScenarioType,
+  searchData: any
+) {
+  const payload = {
+    start_city: _payload.start_city?.trim() || "",
+    destination_city: _payload.destination_city?.trim() || "",
+    budget_range: _payload.budget_range?.trim() || "",
+    move_month: _payload.move_month?.trim() || "",
+    context: _payload.context?.trim() || "",
+  };
+  const scenarioLabel = SCENARIO_LABELS[scenario];
+
+  const scenarioBias = {
+    cheapest:
+      "Prioritize minimizing cost. Prefer DIY options, budget flights, shared or modest housing, and longer timelines if it saves money.",
+    balanced:
+      "Balance cost, time, and convenience. Choose realistic, middle-of-the-road options likely for most movers.",
+    fastest:
+      "Prioritize speed. Use approaches that reduce waiting time even at higher cost; consider premium processing, temporary housing to accelerate arrival, etc.",
+    luxury:
+      "Prioritize convenience and service quality. Assume use of relocation agents, premium services, and higher budgets to reduce stress and delays.",
+  }[scenario];
+
+  let realTimeContext = "";
+  if (searchData && searchData.analysis) {
+    realTimeContext = `
+
+REAL-TIME SEARCH DATA (from web research):
+- Visa Requirements: ${searchData.analysis.visaSummary}
+- Housing Market: ${searchData.analysis.housingSummary}
+- Cost of Living: ${searchData.analysis.costSummary}
+- Transport Options: ${searchData.analysis.transportSummary}
+${searchData.analysis.educationSummary ? `- Education: ${searchData.analysis.educationSummary}` : ""}
+${searchData.analysis.petSummary ? `- Pet Relocation: ${searchData.analysis.petSummary}` : ""}
+- Estimated Total Cost: ${searchData.analysis.totalEstimatedCost}
+- Estimated Timeline: ${searchData.analysis.estimatedTimeline}
+- Data Confidence: ${Math.round(searchData.analysis.confidenceScore * 100)}%
+
+Use this real-time data to inform your simulation and make it more accurate and current.`;
+  }
+
+  const system = `
+ROLE AND GOAL
+You are an expert relocation logistics simulator. Your goal is to generate one distinct, realistic simulation for the mover based on the provided inputs, real-time web data, and the specified scenario style.
+
+CORE VARIABLES (INPUTS)
+- Profile: Not provided explicitly; infer a reasonable baseline family profile unless context specifies otherwise.
+- Origin: ${payload.start_city}
+- Destination: ${payload.destination_city}
+- Budget Range: ${payload.budget_range}
+- Ideal Move Month: ${payload.move_month}
+- Additional Context: ${payload.context}
+${realTimeContext}
+
+SIMULATION LOGIC (PROCESS)
+For the destination, simulate the full relocation process and estimate both cost and time for:
+1) Visa & Immigration (path, docs, processing times, fees) - USE REAL-TIME DATA
+2) Pet Relocation (requirements, costs, timeline) if relevant - USE REAL-TIME DATA
+3) Housing (rental process, average rent, deposits, agent fees) - USE REAL-TIME DATA
+4) Cost of Living Adjustment (salary vs. taxes and expenses) - USE REAL-TIME DATA
+5) Setup Costs (shipping, flights, temporary housing) - USE REAL-TIME DATA
+6) Timeline Estimation (Gantt-style phases with dependencies)
+
+SCENARIO STYLE
+Scenario: ${scenarioLabel}
+Guidance: ${scenarioBias}
+
+OUTPUT FORMAT
+Return a concise Markdown block containing:
+- ${scenarioLabel}
+- Bullet summaries for each factor with concrete estimates based on real-time data
+- Total Estimated Cost (USD) and Estimated Timeline (months) - align with search data
+- One major pro and one major con
+- A feasibility score (1-10)
+`.trim();
+
+  const user =
+    "Using the inputs above and the real-time search data, produce the simulation. Be concrete, accurate, and avoid filler.";
+
+  return [
+    { role: "system" as const, content: system },
+    { role: "user" as const, content: user },
+  ];
+}
+
 export const streamSimulation = action({
   args: {
     start_city: v.optional(v.string()),
@@ -103,7 +197,52 @@ export const streamSimulation = action({
       apiKey: process.env.OPEN_AI_API,
     });
 
-    const messages = buildMessages(
+    // Parse cities to extract city and country
+    const parseLocation = (location: string) => {
+      const parts = location?.split(',').map(p => p.trim()) || [];
+      if (parts.length >= 2) {
+        const country = parts[parts.length - 1];
+        const city = parts.slice(0, -1).join(', ');
+        return { city, country };
+      }
+      return { city: location || '', country: '' };
+    };
+
+    const origin = parseLocation(args.start_city || '');
+    const destination = parseLocation(args.destination_city || '');
+
+    // Parse budget range
+    let budgetMin: number | undefined;
+    let budgetMax: number | undefined;
+    if (args.budget_range) {
+      const budgetMatch = args.budget_range.match(/\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)/);
+      if (budgetMatch) {
+        budgetMin = parseInt(budgetMatch[1].replace(/,/g, ''));
+        budgetMax = parseInt(budgetMatch[2].replace(/,/g, ''));
+      }
+    }
+
+    // Call Exa search to get real-time data
+    let searchData: any;
+    try {
+      searchData = await ctx.runAction(internal.internal.relocationSearch.performStructuredSearch, {
+        originCity: origin.city,
+        originCountry: origin.country,
+        destinationCity: destination.city,
+        destinationCountry: destination.country,
+        scenario: args.scenario,
+        budgetMin,
+        budgetMax,
+        moveMonth: args.move_month,
+        context: args.context,
+      });
+    } catch (error) {
+      console.error("Exa search failed:", error);
+      searchData = null;
+    }
+
+    // Build enhanced messages with Exa search data
+    const messages = buildMessagesWithSearchData(
       {
         start_city: args.start_city,
         destination_city: args.destination_city,
@@ -111,7 +250,8 @@ export const streamSimulation = action({
         move_month: args.move_month,
         context: args.context,
       },
-      args.scenario
+      args.scenario,
+      searchData
     );
 
     const stream = await openai.chat.completions.create({
@@ -128,7 +268,29 @@ export const streamSimulation = action({
       }
     }
 
-    return chunks.join("");
+    const result = chunks.join("");
+    
+    // Return both the simulation and search data
+    return {
+      simulation: result,
+      searchData: searchData ? {
+        sources: {
+          visa: searchData.searchData.visaRequirements.slice(0, 2).map((s: any) => ({
+            title: s.title,
+            url: s.url,
+          })),
+          housing: searchData.searchData.housingMarket.slice(0, 2).map((s: any) => ({
+            title: s.title,
+            url: s.url,
+          })),
+          cost: searchData.searchData.costOfLiving.slice(0, 2).map((s: any) => ({
+            title: s.title,
+            url: s.url,
+          })),
+        },
+        insights: searchData.analysis,
+      } : null,
+    };
   },
 });
 

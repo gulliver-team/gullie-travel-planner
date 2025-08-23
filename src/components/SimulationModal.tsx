@@ -5,6 +5,28 @@ import { motion, AnimatePresence } from "motion/react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
+interface SimulationResult {
+  text: string;
+  searchData: {
+    sources: {
+      visa: Array<{ title: string; url: string }>;
+      housing: Array<{ title: string; url: string }>;
+      cost: Array<{ title: string; url: string }>;
+    };
+    insights: {
+      visaSummary: string;
+      housingSummary: string;
+      costSummary: string;
+      transportSummary: string;
+      educationSummary?: string;
+      petSummary?: string;
+      totalEstimatedCost: string;
+      estimatedTimeline: string;
+      confidenceScore: number;
+    };
+  } | null;
+}
+
 interface SimulationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,7 +70,7 @@ export function SimulationModal({
   });
 
   const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<Record<string, string>>({});
+  const [results, setResults] = useState<Record<string, SimulationResult>>({});
   const [timelines, setTimelines] = useState<Record<string, TimelineData>>({});
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
     {}
@@ -108,7 +130,6 @@ export function SimulationModal({
     setIsFormCollapsed(true);
     setResults({});
     setTimelines({});
-    setExpandedScenario(null);
 
     const budgetRange = formatBudgetRange();
 
@@ -131,14 +152,24 @@ export function SimulationModal({
           scenario: scenario.key,
         });
 
-        setResults((prev) => ({ ...prev, [scenario.key]: result }));
+        // Handle new format with both simulation and searchData
+        const simulationText = typeof result === 'string' ? result : result.simulation;
+        const searchData = typeof result === 'object' ? result.searchData : null;
+
+        setResults((prev) => ({ 
+          ...prev, 
+          [scenario.key]: {
+            text: simulationText,
+            searchData: searchData
+          }
+        }));
         setLoadingStates((prev) => ({ ...prev, [scenario.key]: false }));
 
         // Generate timeline
         const timeline = await generateTimeline({
           scenario_key: scenario.key,
           scenario_title: scenario.label,
-          raw_text: result.slice(0, 15000),
+          raw_text: simulationText.slice(0, 15000),
         });
 
         setTimelines((prev) => ({ ...prev, [scenario.key]: timeline }));
@@ -146,7 +177,10 @@ export function SimulationModal({
         console.error(`Error in ${scenario.key}:`, error);
         setResults((prev) => ({
           ...prev,
-          [scenario.key]: `Error: ${error}`,
+          [scenario.key]: {
+            text: `Error: ${error}`,
+            searchData: null
+          },
         }));
         setLoadingStates((prev) => ({ ...prev, [scenario.key]: false }));
       }
@@ -167,7 +201,6 @@ export function SimulationModal({
     });
     setResults({});
     setTimelines({});
-    setExpandedScenario(null);
   };
 
   return (
@@ -424,7 +457,7 @@ interface TimelineData {
 
 interface ComparisonTableProps {
   scenarios: { key: string; label: string }[];
-  results: Record<string, string>;
+  results: Record<string, SimulationResult>;
   timelines: Record<string, TimelineData>;
   loadingStates: Record<string, boolean>;
   currentPhrases: Record<string, string>;
@@ -434,8 +467,7 @@ function ComparisonTable({
   scenarios, 
   results, 
   timelines, 
-  loadingStates, 
-  currentPhrases 
+  loadingStates
 }: ComparisonTableProps) {
   const comparisonRows = [
     { 
@@ -455,29 +487,55 @@ function ComparisonTable({
     },
     { 
       label: "Visa Requirements", 
-      getValue: (timeline?: TimelineData, result?: string) => {
+      getValue: (timeline?: TimelineData, result?: SimulationResult) => {
         if (!result) return "TBD";
-        // Extract visa info from result text
-        const visaMatch = result.match(/visa[^.]*?([A-Z][^.]*)/i);
+        // Use real-time search data if available
+        if (result.searchData?.insights?.visaSummary) {
+          return result.searchData.insights.visaSummary.substring(0, 50) + "...";
+        }
+        // Fallback to extracting from text
+        const text = typeof result === 'string' ? result : result.text;
+        const visaMatch = text.match(/visa[^.]*?([A-Z][^.]*)/i);
         return visaMatch ? visaMatch[1].substring(0, 50) + "..." : "Standard process";
       }
     },
     { 
       label: "Housing Strategy", 
-      getValue: (timeline?: TimelineData, result?: string) => {
+      getValue: (timeline?: TimelineData, result?: SimulationResult) => {
         if (!result) return "TBD";
-        // Extract housing info from result text
-        const housingMatch = result.match(/housing[^.]*?([A-Z][^.]*)/i);
+        // Use real-time search data if available
+        if (result.searchData?.insights?.housingSummary) {
+          return result.searchData.insights.housingSummary.substring(0, 50) + "...";
+        }
+        // Fallback to extracting from text
+        const text = typeof result === 'string' ? result : result.text;
+        const housingMatch = text.match(/housing[^.]*?([A-Z][^.]*)/i);
         return housingMatch ? housingMatch[1].substring(0, 50) + "..." : "Standard rental";
       }
     },
     { 
       label: "Pet Relocation", 
-      getValue: (timeline?: TimelineData, result?: string) => {
+      getValue: (timeline?: TimelineData, result?: SimulationResult) => {
         if (!result) return "TBD";
-        // Extract pet info from result text
-        const petMatch = result.match(/pet[^.]*?([A-Z][^.]*)/i);
+        // Use real-time search data if available
+        if (result.searchData?.insights?.petSummary) {
+          return result.searchData.insights.petSummary.substring(0, 50) + "...";
+        }
+        // Fallback to extracting from text
+        const text = typeof result === 'string' ? result : result.text;
+        const petMatch = text.match(/pet[^.]*?([A-Z][^.]*)/i);
         return petMatch ? petMatch[1].substring(0, 50) + "..." : "Not specified";
+      }
+    },
+    { 
+      label: "Data Sources", 
+      getValue: (timeline?: TimelineData, result?: SimulationResult) => {
+        if (!result?.searchData?.sources) return "Simulated";
+        const sourceCount = 
+          (result.searchData.sources.visa?.length || 0) +
+          (result.searchData.sources.housing?.length || 0) +
+          (result.searchData.sources.cost?.length || 0);
+        return sourceCount > 0 ? `${sourceCount} real-time sources` : "Simulated";
       }
     },
     { 
@@ -506,7 +564,7 @@ function ComparisonTable({
       </div>
 
       {/* Data Rows */}
-      {comparisonRows.map((row, rowIndex) => (
+      {comparisonRows.map((row) => (
         <div key={row.label} className="grid grid-cols-5 border-b border-green-500/30 last:border-b-0">
           <div className="p-4 bg-green-500/5 border-r border-green-500/30 font-medium text-gray-300">
             {row.label}
@@ -541,213 +599,5 @@ function ComparisonTable({
         </div>
       ))}
     </div>
-  );
-}
-
-interface ScenarioCardProps {
-  scenario: { key: string; label: string };
-  result?: string;
-  timeline?: TimelineData;
-  isLoading?: boolean;
-  loadingPhrase?: string;
-  isExpanded?: boolean;
-  onToggleExpand?: () => void;
-}
-
-function ScenarioCard({
-  scenario,
-  result,
-  timeline,
-  isLoading,
-  loadingPhrase,
-  isExpanded,
-  onToggleExpand,
-}: ScenarioCardProps) {
-  const showInitialAnimation = !result;
-  
-  return (
-    <motion.div
-      className="bg-black border border-green-500/30 p-4 relative"
-      initial={showInitialAnimation ? { opacity: 0, y: 20 } : false}
-      animate={showInitialAnimation ? { opacity: 1, y: 0 } : false}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
-
-      <div className="relative z-10">
-        <div className="items-center flex justify-between mb-4">
-          <h3 className="text-sm font-bold text-green-500 uppercase tracking-wider">
-            {scenario.label}
-          </h3>
-          {result && (
-            <button
-              onClick={onToggleExpand}
-              className="text-gray-500 hover:text-green-500 transition-colors transform hover:scale-110"
-            >
-              <svg
-                className={`w-5 h-5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-          )}
-        </div>
-
-        <div className={`${isExpanded ? "" : "min-h-[100px] max-h-[300px]"} overflow-y-auto transition-all duration-300`}>
-          {isLoading ? (
-            <div className="text-gray-500 animate-pulse">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex gap-1">
-                  {[...Array(3)].map((_, i) => (
-                    <span
-                      key={i}
-                      className="w-1 h-3 bg-green-500/50 animate-bounce"
-                      style={{ animationDelay: `${i * 0.1}s` }}
-                    />
-                  ))}
-                </span>
-                <span className="text-xs">{loadingPhrase}</span>
-              </div>
-            </div>
-          ) : result ? (
-            <div className="space-y-4">
-              {timeline && (
-                <div className="flex gap-2 mb-4">
-                  {timeline.budget_total_usd && (
-                    <span className="inline-flex max-h-10 items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
-                      <span>Budget</span>
-                      <span>${timeline.budget_total_usd.toLocaleString()}</span>
-                    </span>
-                  )}
-                  {timeline.timeframe_months && (
-                    <span className="inline-flex max-h-10 items-center gap-1 px-3 py-1 bg-green-500 text-black text-xs font-bold">
-                      <span>Timeframe</span>
-                      <span>{timeline.timeframe_months}mo</span>
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {!isExpanded && timeline?.phases && (
-                  <div className="border-t border-green-500/20 pt-4">
-                    <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">
-                      Timeline Breakdown
-                    </h4>
-                    <div className="space-y-3">
-                  {timeline.phases.map((phase, i) => (
-                    <div
-                      key={i}
-                      className="bg-white/5 border border-green-500/20 p-3"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-bold text-green-500">
-                          {phase.name}
-                        </span>
-                        {(phase.start_month !== undefined ||
-                          phase.end_month !== undefined) && (
-                          <span className="text-xs text-gray-500">
-                            {phase.start_month ?? 0}–{phase.end_month ?? ""}{" "}
-                            mo
-                          </span>
-                        )}
-                      </div>
-                      {phase.summary && (
-                        <p className="text-xs text-gray-400 mb-2">
-                          {phase.summary}
-                        </p>
-                      )}
-                      {phase.tasks && phase.tasks.length > 0 && (
-                        <div className="space-y-2">
-                          {phase.tasks.map((task, j) => (
-                            <div key={j} className="flex items-start gap-2">
-                              <div
-                                className={`w-2 h-2 mt-1 ${
-                                  task.milestone
-                                    ? "bg-green-500"
-                                    : "bg-gray-600"
-                                }`}
-                              />
-                              <div className="flex-1">
-                                <div className="text-xs text-gray-300">
-                                  {task.title}
-                                </div>
-                                {task.desc && (
-                                  <div className="text-xs text-gray-500">
-                                    {task.desc}
-                                  </div>
-                                )}
-                                <div className="flex gap-2 mt-1">
-                                  {task.cost_usd && (
-                                    <span className="text-xs text-gray-600 border border-gray-700 px-1">
-                                      ${task.cost_usd.toLocaleString()}
-                                    </span>
-                                  )}
-                                  {task.duration_weeks && (
-                                    <span className="text-xs text-gray-600 border border-gray-700 px-1">
-                                      {task.duration_weeks} wk
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                    </div>
-                  </div>
-                )}
-
-              {/* <AnimatePresence>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="mt-4"
-                  >
-                    <div className="text-sm text-gray-300 font-mono mb-4">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          h1: ({ children }) => <h1 className="text-lg font-bold text-green-500 mb-2 mt-4">{children}</h1>,
-                          h2: ({ children }) => <h2 className="text-md font-bold text-green-500 mb-2 mt-3">{children}</h2>,
-                          h3: ({ children }) => <h3 className="text-sm font-bold text-green-500 mb-1 mt-2">{children}</h3>,
-                          p: ({ children }) => <p className="text-gray-300 mb-2">{children}</p>,
-                          ul: ({ children }) => <ul className="list-disc list-inside mb-2 text-gray-300">{children}</ul>,
-                          ol: ({ children }) => <ol className="list-decimal list-inside mb-2 text-gray-300">{children}</ol>,
-                          li: ({ children }) => <li className="mb-1">{children}</li>,
-                          code: ({ children }) => <code className="bg-green-500/10 text-green-400 px-1 py-0.5">{children}</code>,
-                          pre: ({ children }) => <pre className="bg-green-500/10 text-green-400 p-2 mb-2 overflow-x-auto">{children}</pre>,
-                          blockquote: ({ children }) => <blockquote className="border-l-2 border-green-500 pl-3 text-gray-400 italic mb-2">{children}</blockquote>,
-                          strong: ({ children }) => <strong className="font-bold text-green-400">{children}</strong>,
-                          em: ({ children }) => <em className="italic text-gray-300">{children}</em>,
-                          hr: () => <hr className="border-green-500/30 my-4" />,
-                          a: ({ href, children }) => <a href={href} className="text-green-400 underline hover:text-green-300" target="_blank" rel="noopener noreferrer">{children}</a>
-                        }}
-                      >
-                        {result}
-                      </ReactMarkdown>
-                    </div>
-                  
-                  </motion.div>
-                )}
-              </AnimatePresence> */}
-            </div>
-          ) : (
-            <div className="text-gray-600 text-sm">Ready to simulate...</div>
-          )}
-        </div>
-      </div>
-    </motion.div>
   );
 }

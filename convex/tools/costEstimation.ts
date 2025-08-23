@@ -219,7 +219,7 @@ export const analyzeWithOpenAI = internalAction({
       );
     }
 
-    if (includeHousing) {
+    if (includeHousing && baseCosts.housing) {
       const housingCost =
         familySize === 1
           ? baseCosts.housing.one_bed

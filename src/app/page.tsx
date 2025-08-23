@@ -4,15 +4,16 @@ import { useState } from "react";
 import { LandingHero } from "@/components/LandingHero";
 import { VapiConversationIndicator } from "@/components/VapiConversationIndicator";
 import { SimulationModal } from "@/components/SimulationModal";
-import { useRouter } from "next/navigation";
 import { useVapi } from "@/providers/VapiProvider";
+import { api } from "@convex/_generated/api";
+import { useMutation } from "convex/react";
 
 export default function Home() {
   const [userName, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSimulationOpen, setIsSimulationOpen] = useState(false);
-  const router = useRouter();
   const { endCall, isCallActive } = useVapi();
+  const createUser = useMutation(api.users.createUser);
 
   const handleStart = async () => {
     if (!userName.trim()) return;
@@ -23,8 +24,7 @@ export default function Home() {
     sessionStorage.setItem("userName", userName);
 
     // Navigate to consultation page
-    router.push("/consultation");
-
+    createUser({ name: userName });
     // Don't start the call here - let user start it manually from consultation page
   };
 

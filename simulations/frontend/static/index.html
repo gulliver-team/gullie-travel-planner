@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Streaming Demo</title>
+    <style>
+      :root {
+        /* Refined monochrome dark palette (not pure black/white) */
+        --bg: #0a0b0d;         /* page background (charcoal) */
+        --panel: #111316;      /* raised surfaces */
+        --border: #1d2129;     /* subtle borders */
+        --text: #e8e9ec;       /* primary text (off-white) */
+        --muted: #9ea3ab;      /* secondary text (cool gray) */
+        --code: #0d0f12;       /* tiles / code-like blocks */
+        /* Accents kept neutral for elegant B/W feel */
+        --accent: #1f232a;     /* interactive bg (deep slate) */
+        --accent-2: #2a2f38;   /* interactive border */
+        --focus: #dfe2e6;      /* light gray focus border */
+        --focusRing: rgba(223,226,230,.12); /* soft halo */
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 0; background: var(--bg); color: var(--text);
+        font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+        color-scheme: dark;
+      }
+      /* Make the main wrapper full-width with safe gutters */
+      .wrap { max-width: none; margin: 0 auto; padding: 32px 16px; }
+      @media (min-width: 1024px) { .wrap { padding: 32px 24px; } }
+      .title { margin: 0 0 16px; font-weight: 650; letter-spacing: .2px; }
+      .muted { color: var(--muted); margin: 0 0 20px; }
+
+      /* Keep the form panel at a readable width */
+      .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; max-width: 860px; margin: 0 auto; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; }
+      .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
+      @media (max-width: 900px) { .row { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+      .field { display:flex; flex-direction:column; gap:6px; }
+      .field label { font-size: 12px; color: var(--muted); }
+      input[type="text"], input[type="month"], select, textarea {
+        width: 100%; border-radius: 10px; padding: 10px 12px; border: 1px solid var(--border);
+        background: #0d0f12; color: var(--text); outline: none; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      }
+      textarea { min-height: 44px; resize: vertical; }
+      input:focus, select:focus, textarea:focus { border-color: var(--focus); box-shadow: 0 0 0 3px var(--focusRing); }
+      button {
+        appearance: none; border: 1px solid var(--accent-2);
+        background: linear-gradient(180deg, #1a1d22, #15181d);
+        color: var(--text); border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer;
+        transition: transform .04s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+      }
+      button:hover { filter: brightness(1.05); }
+      button:active { transform: translateY(1px); }
+      button[disabled] { opacity: .7; cursor: not-allowed; }
+      .btn-ghost { background: transparent; border-color: var(--border); color: var(--muted); }
+      .btn-ghost:hover { border-color: #343a44; color: var(--text); filter: none; }
+
+      .output { margin-top: 16px; background: var(--code); border: 1px solid var(--border);
+        border-radius: 10px; padding: 12px; max-height: 60vh; overflow: auto; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; }
+      .label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+      pre { margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+      /* Full-width scenarios grid (with gutters), responsive */
+      .scenarios { margin-top: 16px; }
+      .grid { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); }
+      @media (max-width: 1400px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+      @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+      .tile { background: var(--code); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; min-height: 180px; box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset; }
+      .tile-header { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600; letter-spacing: .2px; }
+      .tile-output { margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 13px; line-height: 1.4; max-height: 35vh; overflow: auto; }
+      .timeline-area { margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px; }
+      /* Timeline UI */
+      .timeline { display: grid; gap: 12px; }
+      .timeline-header { display:flex; align-items:center; justify-content:space-between; gap: 8px; }
+      .tl-title { font-weight: 700; letter-spacing: .2px; color: var(--text); font-size: 15px; }
+      .chips { display:flex; flex-wrap: wrap; gap: 6px; }
+      /* Flip Budget/Timeframe chips to elegant white for contrast */
+      .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e3e6ea; border-radius: 999px; color: #16181c; background: #ffffff; font-size: 13px; }
+      .chip .val { font-weight: 700; font-size: 14px; color: #0b0d10; }
+      .phases { display:grid; gap:10px; }
+      /* Flip the phase card to white with dark text; keep inner task cards dark for contrast */
+      .phase { border:1px solid #e3e6ea; border-radius: 10px; padding:10px; background: #ffffff; color: #16181c; }
+      .phase-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+      .phase-name { font-weight: 600; color: #0f1216; }
+      .phase-span { color: #3a4048; font-size: 12px; }
+      .phase-summary { color: #2b3138; font-size: 13px; margin-bottom:6px; }
+      .tasks { display:grid; grid-template-columns: 1fr; gap:8px; }
+      .task { display:flex; align-items:flex-start; gap:8px; padding:8px; border:1px solid var(--border); border-radius:8px; background:#0f1216; }
+      .dot { width:8px; height:8px; border-radius:50%; background:#cfd3d8; margin-top:6px; }
+      .task-body { display:flex; flex-direction:column; gap:4px; }
+      .task-title { font-weight:600; font-size:13px; color: var(--text); }
+      .task-desc { font-size:12px; color: var(--muted); }
+      .task-meta { display:flex; gap:6px; flex-wrap:wrap; }
+      .meta { font-size:11px; color: var(--muted); border:1px solid var(--border); padding:2px 6px; border-radius:999px; }
+      /* Timeline loader */
+      .tl-loading { display:flex; align-items:center; gap:8px; color: var(--muted); font-size: 13px; }
+      .tl-loading .bars i { height: 10px; }
+
+      /* Loading animation for tiles */
+      .tile.loading .tile-output { color: var(--muted); }
+      .placeholder { display: inline-flex; align-items: center; gap: 8px; }
+      .bars { display: inline-flex; gap: 3px; }
+      .bars i { width: 3px; height: 12px; background: #2e333c; border-radius: 2px; animation: bounce 1s ease-in-out infinite; }
+      .bars i:nth-child(2) { animation-delay: .1s; }
+      .bars i:nth-child(3) { animation-delay: .2s; }
+      .placeholder .msg { opacity: .9; }
+      @keyframes bounce { 0%, 100% { transform: translateY(0); opacity: .6; } 50% { transform: translateY(-4px); opacity: 1; } }
+
+      /* Global status badge */
+      .status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: rgba(255,255,255,.02); font-size: 13px; }
+      .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #7b828e; }
+      .status-badge.streaming .status-dot { background: #d0d4d9; animation: pulse 1s ease-in-out infinite; }
+      .status-badge.done .status-dot { background: #67e06b; box-shadow: 0 0 0 2px rgba(103,224,107,.15); }
+      @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1 class="title">Simulations</h1>
+      <p class="muted">Scenario simulations for best planning and budgeting.</p>
+
+      <section class="panel">
+        <form id="chat-form">
+          <div class="row" style="margin-bottom:12px;">
+            <div class="field">
+              <label for="start_city">Start City</label>
+              <input id="start_city" name="start_city" type="text" placeholder="San Francisco, CA, USA" />
+            </div>
+            <div class="field">
+              <label for="destination_city">Destination City</label>
+              <input id="destination_city" name="destination_city" type="text" placeholder="Lisbon, Portugal" />
+            </div>
+            <div class="field">
+              <label for="budget_min">Min Budget (USD)</label>
+              <input id="budget_min" name="budget_min" type="number" inputmode="numeric" min="0" step="100" placeholder="e.g., 25000" />
+            </div>
+            <div class="field">
+              <label for="budget_max">Max Budget (USD)</label>
+              <input id="budget_max" name="budget_max" type="number" inputmode="numeric" min="0" step="100" placeholder="e.g., 50000" />
+            </div>
+            <div class="field">
+              <label for="move_month">Ideal Move Month</label>
+              <input id="move_month" name="move_month" type="month" />
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="context">Additional Context</label>
+              <textarea id="context" name="context" rows="3" placeholder="e.g., family with dog, school priority, job details, constraints"></textarea>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" id="clear-btn" class="btn-ghost">Clear</button>
+            <button id="send-btn" type="submit">Run 4 Scenarios</button>
+          </div>
+        </form>
+      </section>
+      <!-- Scenarios grid spans the page width (with gutters) and isn't confined to the form width -->
+      <section class="scenarios">
+        <div id="status" class="status-badge" aria-live="polite"><span class="status-dot"></span><span class="status-text">Ready</span></div>
+        <div id="grid" class="grid"></div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('chat-form');
+      const btn = document.getElementById('send-btn');
+      const clearBtn = document.getElementById('clear-btn');
+      const startEl = document.getElementById('start_city');
+      const destEl = document.getElementById('destination_city');
+      const budgetMinEl = document.getElementById('budget_min');
+      const budgetMaxEl = document.getElementById('budget_max');
+      const monthEl = document.getElementById('move_month');
+      const contextEl = document.getElementById('context');
+      const grid = document.getElementById('grid');
+
+      let controllers = [];
+
+      // Loading phrases for pre-stream animation
+      const loadingPhrases = [
+  'Analyzing the unique cultural fabric and social atmosphere of each district',
+  'Aggregating and cross-referencing thousands of current rental market listings',
+  'Simulating daily commute routes via public transit, driving, and cycling options',
+  'Evaluating curriculum standards and admission availability at international schools',
+  'Calculating a detailed, personalized cost of living index against your income',
+  'Investigating and outlining the most viable long-term visa and residency pathways',
+  'Scoring local coworking spaces based on amenities, community reviews, and pricing',
+  'Correlating official crime statistics with hyperlocal resident safety sentiment data',
+  'Pinpointing public parks, nature reserves, and recreational green spaces nearby',
+  'Identifying popular and hidden-gem destinations for enriching weekend excursions',
+  'Modeling the potential tax liabilities and fiscal implications of your relocation',
+  'Assessing the quality, cost, and accessibility of local healthcare providers',
+  'Projecting annual weather patterns, from seasonal averages to climate trends',
+  'Mapping the entire culinary landscape, from street food stalls to fine dining',
+  'Prioritizing and verifying the local availability of your essential lifestyle amenities',
+  'Optimizing relocation scenarios to perfectly balance your timeline against your budget',
+  'Compiling pet import regulations and identifying pet-friendly housing and areas',
+  'Quantifying the distinct advantages and potential disadvantages between top neighborhoods',
+  'Cataloging entertainment venues, cultural institutions, and local nightlife hotspots',
+  'Forecasting the one-time overhead for utilities, security deposits, and initial setup',
+  'Comparing local internet service providers based on speed, reliability, and real-world cost',
+  'Uncovering often-overlooked administrative fees and potential hidden living expenses',
+  'Generating a dynamic and comprehensive pre-move logistics and documentation checklist',
+  'Forecasting your complete recurring monthly expenditures with high-fidelity projections',
+  'Structuring a strategic, step-by-step itinerary for your first seven days post-arrival',
+  'Deconstructing local banking requirements and international money transfer options',
+  'Gauging the precise walkability and bikeability scores for shortlisted residential zones',
+  'Parsing complex residency permit requirements and typical government processing timelines',
+  'Identifying top-rated fitness centers, specialized gyms, and community sports clubs',
+  'Assembling a comprehensive guide to navigating local public transportation networks',
+  'Calibrating timezone differences and their practical impact on your work and social schedule',
+  'Factoring in proximity and travel time to major airports and international hubs',
+  'Synthesizing long-term data on air quality indexes and other environmental factors',
+  'Researching important local customs, crucial social etiquette, and cultural nuances',
+  'Benchmarking childcare facilities and early childhood education programs for quality',
+  'Mapping the density of grocery stores, farmers markets, and specialty food shops',
+  'Simulating the logistical challenges of shipping personal belongings and furniture',
+  'Reviewing municipal services, including waste management and city recycling programs',
+  'Analyzing the local job market for potential spousal or partner employment opportunities',
+  'Collating information on language schools and effective immersion programs for learners',
+  'Determining drivers license conversion processes and necessary vehicle import laws',
+  'Evaluating the political stability and the long-term economic outlook of the region',
+  'Pinpointing community centers and social groups that closely align with your hobbies',
+  'Cross-validating cellular network coverage and comparing mobile data plan affordability',
+  'Integrating critical consulate and embassy contact information for your nationality',
+  'Projecting the financial impact of currency exchange rate fluctuations on your savings',
+  'Assessing the availability and average cost of comprehensive renters insurance policies',
+  'Sequencing the essential administrative tasks for a seamless and organized first month',
+  'Investigating the local startup scene and key professional networking opportunities',
+  'Building a final, hyper-personalized relocation feasibility and strategic action report'
+];
+
+      function attachAutoScroll(tile) {
+        const out = tile.querySelector('.tile-output');
+        tile._autoscroll = true; // follow output by default
+        out.addEventListener('scroll', () => {
+          const distanceFromBottom = out.scrollHeight - out.scrollTop - out.clientHeight;
+          tile._autoscroll = distanceFromBottom < 8; // re-enable when user returns to bottom
+        });
+      }
+
+      function randomPhrase() {
+        return loadingPhrases[Math.floor(Math.random() * loadingPhrases.length)];
+      }
+
+      function setTileLoading(tile, on) {
+        const out = tile.querySelector('.tile-output');
+        if (on) {
+          tile.classList.add('loading');
+          out.innerHTML = '<div class="placeholder"><span class="bars"><i></i><i></i><i></i></span><span class="msg"></span></div>';
+          const msgEl = out.querySelector('.msg');
+          msgEl.textContent = randomPhrase();
+          // Rotate phrases with a randomized cadence per tile (< 1s)
+          const schedule = () => {
+            const delay = 350 + Math.random() * 400; // 350–750ms
+            tile._loadingTimer = setTimeout(() => {
+              msgEl.textContent = randomPhrase();
+              schedule();
+            }, delay);
+          };
+          // Clear any previous timers just in case
+          if (tile._loadingTimer) { clearTimeout(tile._loadingTimer); }
+          if (tile._loadingInterval) { clearInterval(tile._loadingInterval); tile._loadingInterval = null; }
+          schedule();
+        } else {
+          tile.classList.remove('loading');
+          if (tile._loadingTimer) { clearTimeout(tile._loadingTimer); tile._loadingTimer = null; }
+          if (tile._loadingInterval) { clearInterval(tile._loadingInterval); tile._loadingInterval = null; }
+          // Clear placeholder but keep existing text if any
+          if (out.querySelector('.placeholder')) { out.textContent = out.textContent; }
+        }
+      }
+
+      function setStatus(state, text) {
+        const el = document.getElementById('status');
+        const txt = el.querySelector('.status-text');
+        el.classList.remove('streaming','done');
+        if (state) el.classList.add(state);
+        if (typeof text === 'string') txt.textContent = text;
+      }
+
+      function createTile(label) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.innerHTML = `
+          <div class="tile-header">${label}</div>
+          <pre class="tile-output"></pre>
+          <div class="timeline-area"></div>
+        `;
+        return tile;
+      }
+
+      async function streamToTile(scenario, payload, tile, controller) {
+        const out = tile.querySelector('.tile-output');
+        out.textContent = '';
+        setTileLoading(tile, true);
+        try {
+          const resp = await fetch('/api/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...payload, scenario }),
+            signal: controller.signal,
+          });
+          if (!resp.ok || !resp.body) {
+            setTileLoading(tile, false);
+            out.textContent = `Error: ${resp.status} ${resp.statusText}`;
+            return;
+          }
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder();
+          let received = false;
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            if (!received) {
+              received = true;
+              // Swap out placeholder for real content
+              setTileLoading(tile, false);
+              out.textContent = '';
+            }
+            out.textContent += decoder.decode(value, { stream: true });
+            // Auto-follow output as it streams
+            if (tile._autoscroll) {
+              out.scrollTop = out.scrollHeight;
+            }
+          }
+        } catch (err) {
+          if (controller.signal.aborted) {
+            out.textContent += '\n[aborted]';
+          } else {
+            out.textContent = `[fetch error] ${err}`;
+          }
+        }
+        finally {
+          setTileLoading(tile, false);
+        }
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        // Abort any in-flight streams
+        controllers.forEach(c => c.abort());
+        controllers = [];
+        // Stop any active loading animations from prior tiles
+        document.querySelectorAll('.tile').forEach(t => {
+          if (t._loadingTimer) { clearTimeout(t._loadingTimer); t._loadingTimer = null; }
+          if (t._loadingInterval) { clearInterval(t._loadingInterval); t._loadingInterval = null; }
+        });
+        grid.innerHTML = '';
+
+        // Build a flexible budget range string
+        const minVal = budgetMinEl.value ? Number(budgetMinEl.value) : null;
+        const maxVal = budgetMaxEl.value ? Number(budgetMaxEl.value) : null;
+        let budgetRange = '';
+        if (minVal != null && maxVal != null && isFinite(minVal) && isFinite(maxVal) && maxVal >= minVal) {
+          budgetRange = `${formatUSD(minVal)} - ${formatUSD(maxVal)}`;
+        } else if (minVal != null && isFinite(minVal)) {
+          budgetRange = `Over ${formatUSD(minVal)}`;
+        } else if (maxVal != null && isFinite(maxVal)) {
+          budgetRange = `Under ${formatUSD(maxVal)}`;
+        }
+
+        const payload = {
+          start_city: startEl.value.trim(),
+          destination_city: destEl.value.trim(),
+          budget_range: budgetRange,
+          move_month: monthEl.value,
+          context: contextEl.value.trim(),
+        };
+        btn.disabled = true; btn.textContent = 'Streaming…';
+        setStatus('streaming', 'Streaming 4 scenarios…');
+        let done = 0;
+
+        const scenarios = [
+          { key: 'cheapest', label: 'Cheapest Options' },
+          { key: 'fastest', label: 'Fastest Options' },
+          { key: 'balanced', label: 'Balanced Options' },
+          { key: 'luxury', label: 'Luxury Options' },
+        ];
+
+        for (const s of scenarios) {
+          const tile = createTile(s.label);
+          tile.dataset.key = s.key;
+          tile.dataset.label = s.label;
+          grid.appendChild(tile);
+          attachAutoScroll(tile);
+          const controller = new AbortController();
+          controllers.push(controller);
+          // Fire and forget; no await here to keep them parallel
+          streamToTile(s.key, payload, tile, controller).finally(() => {
+            done += 1;
+            if (done === scenarios.length) {
+              btn.disabled = false; btn.textContent = 'Run 4 Scenarios';
+              setStatus('done', 'All scenarios complete');
+              // Kick off timeline generation for each tile
+              Array.from(grid.children).forEach(t => buildTimelineForTile(t));
+            }
+          });
+        }
+      });
+      function formatUSD(n) {
+        const num = Number(n);
+        if (!isFinite(num)) return '';
+        return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      }
+
+
+      clearBtn.addEventListener('click', () => {
+          startEl.value = '';
+          destEl.value = '';
+          budgetMinEl.value = '';
+          budgetMaxEl.value = '';
+          monthEl.value = '';
+          contextEl.value = '';
+        grid.innerHTML = '';
+        setStatus('', 'Ready');
+      });
+
+      async function buildTimelineForTile(tile) {
+        const area = tile.querySelector('.timeline-area');
+        area.innerHTML = `<div class="tl-loading"><span class="bars"><i></i><i></i><i></i></span> Building timeline…</div>`;
+        const out = tile.querySelector('.tile-output');
+        const raw = out.textContent || '';
+        const payload = {
+          scenario_key: tile.dataset.key,
+          scenario_title: tile.dataset.label,
+          raw_text: raw.slice(0, 15000),
+        };
+        try {
+          const resp = await fetch('/api/timeline', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            let detail = '';
+            try { detail = await resp.text(); } catch {}
+            throw new Error(`${resp.status} ${resp.statusText}${detail ? ' — ' + detail : ''}`);
+          }
+          const data = await resp.json();
+          renderTimeline(area, data);
+        } catch (err) {
+          area.innerHTML = `<div class="tl-loading">\n            <span style="color:#d66;">Failed to build timeline:</span> ${err}.\n            <button class="btn-ghost" style="margin-left:8px;" onclick="(async()=>{ const t=this.closest('.tile'); if(t) { await window.__retryTimeline(t); } })()">Retry</button>\n          </div>`;
+        }
+      }
+
+      window.__retryTimeline = async (tile) => { await buildTimelineForTile(tile); };
+
+      function renderTimeline(container, tl) {
+        const fmtMoney = (n) => (typeof n === 'number' && isFinite(n)) ? `$${n.toLocaleString()}` : null;
+        const fmtMonths = (n) => (typeof n === 'number' && isFinite(n)) ? `${n} mo` : null;
+
+        const chips = [];
+        const money = fmtMoney(tl.budget_total_usd);
+        if (money) chips.push(`<span class="chip"><span>Budget</span><span class="val">${money}</span></span>`);
+        const months = fmtMonths(tl.timeframe_months);
+        if (months) chips.push(`<span class="chip"><span>Timeframe</span><span class="val">${months}</span></span>`);
+
+        const header = `
+          <div class="timeline-header">
+            <div class="tl-title">${tl.headline ? escapeHtml(tl.headline) : 'Timeline'}</div>
+            <div class="chips">${chips.join('')}</div>
+          </div>
+        `;
+
+        const phases = Array.isArray(tl.phases) ? tl.phases : [];
+        const phasesHtml = phases.map(ph => {
+          const span = (ph.start_month != null || ph.end_month != null)
+            ? `<span class="phase-span">${ph.start_month ?? 0}–${ph.end_month ?? ''} mo</span>`
+            : '';
+          const summary = ph.summary ? `<div class="phase-summary">${escapeHtml(ph.summary)}</div>` : '';
+          const tasks = Array.isArray(ph.tasks) ? ph.tasks : [];
+          const tasksHtml = tasks.map(t => {
+            const metas = [];
+            if (typeof t.cost_usd === 'number') metas.push(`<span class="meta">${fmtMoney(t.cost_usd)}</span>`);
+            if (typeof t.duration_weeks === 'number') metas.push(`<span class="meta">${t.duration_weeks} wk</span>`);
+            return `
+              <div class="task">
+                <div class="dot" style="background:${t.milestone ? '#67e06b' : '#cfd3d8'}"></div>
+                <div class="task-body">
+                  <div class="task-title">${escapeHtml(t.title || '')}</div>
+                  ${t.desc ? `<div class="task-desc">${escapeHtml(t.desc)}</div>` : ''}
+                  ${metas.length ? `<div class="task-meta">${metas.join('')}</div>` : ''}
+                </div>
+              </div>`;
+          }).join('');
+          return `
+            <div class="phase">
+              <div class="phase-head"><div class="phase-name">${escapeHtml(ph.name || '')}</div>${span}</div>
+              ${summary}
+              <div class="tasks">${tasksHtml}</div>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = `<div class="timeline">${header}<div class="phases">${phasesHtml}</div></div>`;
+      }
+
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+      }
+    </script>
+  </body>
+  </html>

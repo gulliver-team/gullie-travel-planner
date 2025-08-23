@@ -75,7 +75,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className=" flex items-center justify-center">
         <div className="text-electric animate-pulse">
           Loading account information...
         </div>
@@ -85,7 +85,7 @@ export default function AccountPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-electric mb-4">
             Sign In Required
@@ -95,12 +95,17 @@ export default function AccountPage() {
           </p>
           <Link href="/">
             <motion.button
-              whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
+              whileHover={{
+                scale: 1.05,
+                x: 2,
+                y: -2,
+                transition: { duration: 0.05 },
+              }}
               whileTap={{
                 scale: 0.95,
                 backgroundColor: "#00ffff",
                 color: "#000000",
-                transition: { duration: 0 }
+                transition: { duration: 0 },
               }}
               className="px-6 py-3 border border-electric text-electric"
             >
@@ -113,25 +118,30 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-8">
-      <div className="max-w-2xl w-full">
+    <div className="flex items-center justify-center px-8">
+      <div className=" w-full">
         <h1 className="text-4xl font-bold text-electric mb-8 text-center">
           Account Settings
         </h1>
 
         <div className="border border-electric/30 p-8 mb-8">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center gap-4">
             <h2 className="text-2xl font-bold text-electric">
               Profile Information
             </h2>
             {!editing && (
               <motion.button
-                whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
+                whileHover={{
+                  scale: 1.05,
+                  x: 2,
+                  y: -2,
+                  transition: { duration: 0.05 },
+                }}
                 whileTap={{
                   scale: 0.95,
                   backgroundColor: "#00ffff",
                   color: "#000000",
-                  transition: { duration: 0 }
+                  transition: { duration: 0 },
                 }}
                 className="px-4 py-2 border border-electric text-electric"
                 onClick={() => setEditing(true)}
@@ -211,12 +221,17 @@ export default function AccountPage() {
           {editing && (
             <div className="flex gap-4 mt-6">
               <motion.button
-                whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
+                whileHover={{
+                  scale: 1.05,
+                  x: 2,
+                  y: -2,
+                  transition: { duration: 0.05 },
+                }}
                 whileTap={{
                   scale: 0.95,
                   backgroundColor: "#00ffff",
                   color: "#000000",
-                  transition: { duration: 0 }
+                  transition: { duration: 0 },
                 }}
                 className="px-6 py-3 border border-electric text-electric disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSave}
@@ -226,7 +241,12 @@ export default function AccountPage() {
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.05, x: 2, y: -2, transition: { duration: 0.05 } }}
+                whileHover={{
+                  scale: 1.05,
+                  x: 2,
+                  y: -2,
+                  transition: { duration: 0.05 },
+                }}
                 whileTap={{ scale: 0.95, transition: { duration: 0 } }}
                 className="px-6 py-3 border border-gray-500 text-gray-500"
                 onClick={() => {

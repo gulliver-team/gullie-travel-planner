@@ -17,82 +17,6 @@ const formatToolResponse = (toolCallId: string, result: any) => ({
   ],
 });
 
-// City Search Tool
-http.route({
-  path: "/tools/run_simulation",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    let toolCallId = "error";
-    try {
-      const body = (await request.json()) as any;
-      const { message, call } = body || {};
-      const { toolCallList } = message || {};
-
-      if (!toolCallList || !toolCallList[0]) {
-        throw new Error("No tool call found in request");
-      }
-
-      const toolCall = toolCallList[0];
-      toolCallId = toolCall.id || "error";
-      const args = toolCall.arguments || toolCall.function?.arguments || {};
-
-      // Log payload for local debugging
-      console.log("[run_simulation] tool args:", JSON.stringify(args));
-
-      // Track tool call in conversation store if call info present
-      if (call?.id) {
-        await ctx.runAction(internal.tools.conversationTracker.trackConversation, {
-          callId: call.id,
-          sessionId: call.sessionId,
-          message: {
-            type: "tool-calls",
-            toolCall: {
-              name: "run_simulation",
-              arguments: args,
-            },
-          },
-          call,
-        });
-      }
-
-      // Optionally: forward to simulations backend here if a base URL is configured
-      // const base = process.env.SIMULATIONS_BASE_URL; // e.g., http://localhost:8080
-      // if (base) await fetch(`${base}/api/stream`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...})});
-
-      return new Response(
-        JSON.stringify(formatToolResponse(toolCallId, { ok: true, received: args })),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    } catch (error: any) {
-      console.error("run_simulation error:", error);
-      return new Response(
-        JSON.stringify(
-          formatToolResponse(toolCallId, `I couldn't run the simulation: ${error.message}`)
-        ),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-  }),
-});
-
-// CORS preflight for run_simulation
-http.route({
-  path: "/tools/run_simulation",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
-});
-
 http.route({
   path: "/tools/search_relocation_options",
   method: "POST",
@@ -523,82 +447,28 @@ http.route({
   }),
 });
 
-// OPTIONS handler for CORS preflight
-http.route({
-  path: "/tools/search_relocation_options",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
-});
+// Consolidated CORS preflight handler for all tool endpoints
+const toolPaths = [
+  "/tools/search_relocation_options",
+  "/tools/get_visa_requirements",
+  "/tools/estimate_relocation_costs",
+  "/tools/get_document_details",
+  "/tools/capture_contact_info",
+  "/tools/send_pdf_report",
+  "/tools/confirm_visa_options",
+];
 
-http.route({
-  path: "/tools/get_visa_requirements",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
-});
-
-http.route({
-  path: "/tools/estimate_relocation_costs",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
-});
-
-http.route({
-  path: "/tools/get_document_details",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
-});
-
-http.route({
-  path: "/tools/capture_contact_info",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
-});
-
-http.route({
-  path: "/tools/send_pdf_report",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
-});
-
-http.route({
-  path: "/tools/confirm_visa_options",
-  method: "OPTIONS",
-  handler: httpAction(async () => {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }),
+toolPaths.forEach(path => {
+  http.route({
+    path,
+    method: "OPTIONS",
+    handler: httpAction(async () => {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders,
+      });
+    }),
+  });
 });
 
 // Vapi Webhook Handler

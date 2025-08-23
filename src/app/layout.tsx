@@ -43,7 +43,9 @@ export default function RootLayout({
           <ConvexClientProvider>
             <VapiProvider>
               <Navigation />
-              <div className="flex flex-col items-center justify-center p-8 pt-24 min-h-screen">{children}</div>
+              <div className="flex flex-col items-center justify-center  pt-24 min-h-screen">
+                {children}
+              </div>
             </VapiProvider>
           </ConvexClientProvider>
         </AuthKitProvider>

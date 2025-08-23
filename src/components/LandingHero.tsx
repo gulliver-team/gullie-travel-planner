@@ -3,6 +3,7 @@
 import { VapiConversationIndicator } from "./VapiConversationIndicator";
 import { useVapi } from "@/providers/VapiProvider";
 import DecryptedText from "./DecryptedText";
+import { motion } from "motion/react";
 
 interface LandingHeroProps {
   userName: string;
@@ -23,8 +24,8 @@ export function LandingHero({
     <div className="w-full max-w-5xl mx-auto">
       <div className="flex flex-col items-center justify-center gap-10">
         {/* Header Section */}
-        <div className="text-center flex flex-col items-center space-y-6">
-          <h1 className="text-7xl md:text-8xl font-bold">
+        <div className="text-center py-10 flex flex-col items-center space-y-6">
+          <h1 className="text-2xl md:text-8xl font-bold">
             <DecryptedText
               text="GULLIE"
               animateOn="view"
@@ -36,7 +37,7 @@ export function LandingHero({
               parentClassName="animate-pulse"
             />
           </h1>
-          <p className="text-2xl md:text-3xl text-gray-300">
+          <p className="text-6xl font-semibold md:text-3xl text-gray-300">
             <DecryptedText
               text="Your AI Global Mobility Expert"
               animateOn="view"
@@ -86,34 +87,74 @@ export function LandingHero({
           {/* Voice Call Controls */}
           <div className="w-full flex gap-4">
             {!isCallActive ? (
-              <button
+              <motion.button
                 onClick={() => startCall(userName || "Guest")}
-                className="flex-1 px-6 py-4 bg-gray-400 hover:bg-green-600 text-black 
-                           font-bold uppercase tracking-wider text-2xl border border-green-400
-                           transform transition-all duration-100 hover:scale-x-105 hover:scale-y-105
-                           active:bg-white active:text-black"
+                className="flex-1 px-6 py-4 bg-gray-400 text-black 
+                           font-bold uppercase tracking-wider text-2xl border border-green-400"
                 style={{
                   boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
                 }}
+                whileHover={{
+                  scaleX: 1.05,
+                  scaleY: 1.05,
+                  backgroundColor: "#16a34a",
+                  transition: { duration: 0.05 },
+                }}
+                whileTap={{
+                  backgroundColor: "#ffffff",
+                  color: "#000000",
+                  transition: { duration: 0 },
+                }}
               >
                 🎤 Start Voice Consultation
-              </button>
+              </motion.button>
             ) : (
-              <button
+              <motion.button
                 onClick={endCall}
-                className="flex-1 px-6 py-4 bg-red-500 hover:bg-red-600 text-white 
-                           font-bold uppercase tracking-wider text-2xl border border-red-400
-                           transform transition-all duration-100 hover:scale-x-105 hover:scale-y-105
-                           active:bg-white active:text-black"
+                className="flex-1 px-6 py-4 bg-red-500 text-white 
+                           font-bold uppercase tracking-wider text-2xl border border-red-400"
                 style={{
                   boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
                 }}
+                whileHover={{
+                  scaleX: 1.05,
+                  scaleY: 1.05,
+                  backgroundColor: "#dc2626",
+                  transition: { duration: 0.05 },
+                }}
+                whileTap={{
+                  backgroundColor: "#ffffff",
+                  color: "#000000",
+                  transition: { duration: 0 },
+                }}
               >
                 End Call
-              </button>
+              </motion.button>
             )}
           </div>
-
+          <div className="text-center gap-4 flex flex-col text-xs text-gray-600">
+            <p>
+              We analyze cheapest, fastest, most expensive, and most convenient
+              options
+            </p>
+            <p>Personalized PDF reports delivered to your email</p>
+            <div className="mt-4 pt-4 border-t border-gray-800">
+              <p className="text-green-400 text-xl font-bold">
+                📞 Call us directly:{" "}
+                <DecryptedText
+                  text="+1 (628) 241 4121"
+                  speed={50}
+                  characters="0123456789+-() "
+                  useOriginalCharsOnly={true}
+                  className="text-green-400"
+                  encryptedClassName="text-green-700"
+                />
+              </p>
+              <p className="text-gray-500 text-xs mt-1">
+                Available 24/7 for voice consultations
+              </p>
+            </div>
+          </div>
           <VapiConversationIndicator />
         </div>
 
@@ -169,28 +210,6 @@ export function LandingHero({
         </div>
 
         {/* Footer Info */}
-        <div className="text-center gap-4 flex flex-col text-xs text-gray-600">
-          <p>
-            We analyze cheapest, fastest, most expensive, and most convenient
-            options
-          </p>
-          <p>Personalized PDF reports delivered to your email</p>
-          <div className="mt-4 pt-4 border-t border-gray-800">
-            <p className="text-green-400 text-xl font-bold">
-              📞 Call us directly: <DecryptedText
-                text="+1 (628) 241 4121"
-                speed={50}
-                characters="0123456789+-() "
-                useOriginalCharsOnly={true}
-                className="text-green-400"
-                encryptedClassName="text-green-700"
-              />
-            </p>
-            <p className="text-gray-500 text-xs mt-1">
-              Available 24/7 for voice consultations
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

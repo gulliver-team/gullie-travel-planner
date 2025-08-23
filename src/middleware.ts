@@ -2,8 +2,9 @@ import { authkitMiddleware } from "@workos-inc/authkit-nextjs";
 
 export default authkitMiddleware({
   redirectUri:
-    process.env.VERCEL_TARGET_ENV === "preview" || process.env.VERCEL_TARGET_ENV === "production" 
-      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}${process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI}`
+    process.env.VERCEL_TARGET_ENV === "preview" ||
+    process.env.VERCEL_TARGET_ENV === "production"
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL ?? "gullie-travel-planner.vercel.app"}${process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI}`
       : `http://localhost:3000${process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI}`,
 });
 

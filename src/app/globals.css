@@ -171,3 +171,35 @@ textarea::-moz-selection {
   background-color: #00ff00;
   color: #000000;
 }
+
+/* Global ultra-thin scrollbar styles */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00ff88;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00ffff;
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar styling - ultra thin */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #00ff88 transparent;
+}

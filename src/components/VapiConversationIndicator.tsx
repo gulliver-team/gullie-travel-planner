@@ -128,7 +128,7 @@ export function VapiConversationIndicator({ showAlways = false }: VapiConversati
                     <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">
                       {lastTranscript.role === 'user' ? 'You' : 'Agent'}:
                     </p>
-                    <div className="overflow-y-auto max-h-[100px]">
+                    <div className="overflow-y-auto max-h-[100px] scrollbar-thin">
                       <p className="text-sm text-gray-300 leading-relaxed">
                         {lastTranscript.text}
                       </p>

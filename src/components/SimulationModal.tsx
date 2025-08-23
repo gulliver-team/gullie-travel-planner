@@ -217,7 +217,7 @@ export function SimulationModal({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-black border border-green-500/30 w-full max-w-[90vw] max-h-[90vh] relative"
+            className="bg-black border border-green-500/30 w-full max-w-[90vw] max-h-[90vh] relative overflow-y-auto scrollbar-thin"
             onClick={(e) => e.stopPropagation()}
             style={{
               boxShadow: "0 0 40px rgba(0, 255, 0, 0.1)",

@@ -8,17 +8,11 @@ import { useState } from "react";
 
 interface LandingHeroProps {
   userName: string;
-  setUserName: (name: string) => void;
-  onStart: () => void;
-  isLoading?: boolean;
   onOpenSimulation: () => void;
 }
 
 export function LandingHero({
   userName,
-  setUserName,
-  onStart,
-  isLoading,
   onOpenSimulation,
 }: LandingHeroProps) {
   const { startCall, endCall, isCallActive } = useVapi();

@@ -43,6 +43,7 @@ import type * as tools_conversationTracker from "../tools/conversationTracker.js
 import type * as tools_costEstimation from "../tools/costEstimation.js";
 import type * as tools_documentDetails from "../tools/documentDetails.js";
 import type * as tools_emailCapture from "../tools/emailCapture.js";
+import type * as tools_exaSearch from "../tools/exaSearch.js";
 import type * as tools_pdfSender from "../tools/pdfSender.js";
 import type * as tools_updateUserReport from "../tools/updateUserReport.js";
 import type * as tools_visaRequirements from "../tools/visaRequirements.js";
@@ -86,6 +87,7 @@ declare const fullApi: ApiFromModules<{
   "tools/costEstimation": typeof tools_costEstimation;
   "tools/documentDetails": typeof tools_documentDetails;
   "tools/emailCapture": typeof tools_emailCapture;
+  "tools/exaSearch": typeof tools_exaSearch;
   "tools/pdfSender": typeof tools_pdfSender;
   "tools/updateUserReport": typeof tools_updateUserReport;
   "tools/visaRequirements": typeof tools_visaRequirements;

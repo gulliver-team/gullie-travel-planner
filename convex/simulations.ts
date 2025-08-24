@@ -199,43 +199,48 @@ export const streamSimulation = action({
 
     // Parse cities to extract city and country
     const parseLocation = (location: string) => {
-      const parts = location?.split(',').map(p => p.trim()) || [];
+      const parts = location?.split(",").map((p) => p.trim()) || [];
       if (parts.length >= 2) {
         const country = parts[parts.length - 1];
-        const city = parts.slice(0, -1).join(', ');
+        const city = parts.slice(0, -1).join(", ");
         return { city, country };
       }
-      return { city: location || '', country: '' };
+      return { city: location || "", country: "" };
     };
 
-    const origin = parseLocation(args.start_city || '');
-    const destination = parseLocation(args.destination_city || '');
+    const origin = parseLocation(args.start_city || "");
+    const destination = parseLocation(args.destination_city || "");
 
     // Parse budget range
     let budgetMin: number | undefined;
     let budgetMax: number | undefined;
     if (args.budget_range) {
-      const budgetMatch = args.budget_range.match(/\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)/);
+      const budgetMatch = args.budget_range.match(
+        /\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)/
+      );
       if (budgetMatch) {
-        budgetMin = parseInt(budgetMatch[1].replace(/,/g, ''));
-        budgetMax = parseInt(budgetMatch[2].replace(/,/g, ''));
+        budgetMin = parseInt(budgetMatch[1].replace(/,/g, ""));
+        budgetMax = parseInt(budgetMatch[2].replace(/,/g, ""));
       }
     }
 
     // Call Exa search to get real-time data
     let searchData: any;
     try {
-      searchData = await ctx.runAction(internal.internal.relocationSearch.performStructuredSearch, {
-        originCity: origin.city,
-        originCountry: origin.country,
-        destinationCity: destination.city,
-        destinationCountry: destination.country,
-        scenario: args.scenario,
-        budgetMin,
-        budgetMax,
-        moveMonth: args.move_month,
-        context: args.context,
-      });
+      searchData = await ctx.runAction(
+        internal.internal.relocationSearch.performStructuredSearch,
+        {
+          originCity: origin.city,
+          originCountry: origin.country,
+          destinationCity: destination.city,
+          destinationCountry: destination.country,
+          scenario: args.scenario,
+          budgetMin,
+          budgetMax,
+          moveMonth: args.move_month,
+          context: args.context,
+        }
+      );
     } catch (error) {
       console.error("Exa search failed:", error);
       searchData = null;
@@ -269,27 +274,35 @@ export const streamSimulation = action({
     }
 
     const result = chunks.join("");
-    
+
     // Return both the simulation and search data
     return {
       simulation: result,
-      searchData: searchData ? {
-        sources: {
-          visa: searchData.searchData.visaRequirements.slice(0, 2).map((s: any) => ({
-            title: s.title,
-            url: s.url,
-          })),
-          housing: searchData.searchData.housingMarket.slice(0, 2).map((s: any) => ({
-            title: s.title,
-            url: s.url,
-          })),
-          cost: searchData.searchData.costOfLiving.slice(0, 2).map((s: any) => ({
-            title: s.title,
-            url: s.url,
-          })),
-        },
-        insights: searchData.analysis,
-      } : null,
+      searchData: searchData
+        ? {
+            sources: {
+              visa: searchData.searchData.visaRequirements
+                .slice(0, 2)
+                .map((s: any) => ({
+                  title: s.title,
+                  url: s.url,
+                })),
+              housing: searchData.searchData.housingMarket
+                .slice(0, 2)
+                .map((s: any) => ({
+                  title: s.title,
+                  url: s.url,
+                })),
+              cost: searchData.searchData.costOfLiving
+                .slice(0, 2)
+                .map((s: any) => ({
+                  title: s.title,
+                  url: s.url,
+                })),
+            },
+            insights: searchData.analysis,
+          }
+        : null,
     };
   },
 });

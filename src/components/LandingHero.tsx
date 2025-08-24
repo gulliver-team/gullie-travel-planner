@@ -208,7 +208,7 @@ export function LandingHero({
               />
             </h3>
             <p className="text-sm text-gray-400">
-              $99/month until your relocation is completed, first month free
+              $990/month until your relocation is completed, first month free
             </p>
           </div>
         </div>

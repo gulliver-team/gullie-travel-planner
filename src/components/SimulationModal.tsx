@@ -469,6 +469,20 @@ function ComparisonTable({
   timelines, 
   loadingStates
 }: ComparisonTableProps) {
+  const [expandedCells, setExpandedCells] = useState<Record<string, boolean>>({});
+
+  const toggleCell = (rowLabel: string, scenarioKey: string) => {
+    const cellKey = `${rowLabel}-${scenarioKey}`;
+    setExpandedCells(prev => ({
+      ...prev,
+      [cellKey]: !prev[cellKey]
+    }));
+  };
+
+  const isCellExpanded = (rowLabel: string, scenarioKey: string) => {
+    const cellKey = `${rowLabel}-${scenarioKey}`;
+    return expandedCells[cellKey] || false;
+  };
   const comparisonRows = [
     { 
       label: "Total Cost", 
@@ -491,12 +505,19 @@ function ComparisonTable({
         if (!result) return "TBD";
         // Use real-time search data if available
         if (result.searchData?.insights?.visaSummary) {
-          return result.searchData.insights.visaSummary.substring(0, 50) + "...";
+          return result.searchData.insights.visaSummary.length > 120 
+            ? result.searchData.insights.visaSummary.substring(0, 120) + "..."
+            : result.searchData.insights.visaSummary;
         }
         // Fallback to extracting from text
         const text = typeof result === 'string' ? result : result.text;
         const visaMatch = text.match(/visa[^.]*?([A-Z][^.]*)/i);
-        return visaMatch ? visaMatch[1].substring(0, 50) + "..." : "Standard process";
+        return visaMatch 
+          ? (visaMatch[1].length > 120 
+              ? visaMatch[1].substring(0, 120) + "..." 
+              : visaMatch[1]
+            )
+          : "Standard process";
       }
     },
     { 
@@ -505,12 +526,19 @@ function ComparisonTable({
         if (!result) return "TBD";
         // Use real-time search data if available
         if (result.searchData?.insights?.housingSummary) {
-          return result.searchData.insights.housingSummary.substring(0, 50) + "...";
+          return result.searchData.insights.housingSummary.length > 120 
+            ? result.searchData.insights.housingSummary.substring(0, 120) + "..."
+            : result.searchData.insights.housingSummary;
         }
         // Fallback to extracting from text
         const text = typeof result === 'string' ? result : result.text;
         const housingMatch = text.match(/housing[^.]*?([A-Z][^.]*)/i);
-        return housingMatch ? housingMatch[1].substring(0, 50) + "..." : "Standard rental";
+        return housingMatch 
+          ? (housingMatch[1].length > 120 
+              ? housingMatch[1].substring(0, 120) + "..." 
+              : housingMatch[1]
+            )
+          : "Standard rental";
       }
     },
     { 
@@ -519,29 +547,13 @@ function ComparisonTable({
         if (!result) return "TBD";
         // Use real-time search data if available
         if (result.searchData?.insights?.petSummary) {
-          return result.searchData.insights.petSummary.substring(0, 50) + "...";
+          return result.searchData.insights.petSummary;
         }
         // Fallback to extracting from text
         const text = typeof result === 'string' ? result : result.text;
         const petMatch = text.match(/pet[^.]*?([A-Z][^.]*)/i);
-        return petMatch ? petMatch[1].substring(0, 50) + "..." : "Not specified";
+        return petMatch ? petMatch[1] : "Not specified";
       }
-    },
-    { 
-      label: "Data Sources", 
-      getValue: (timeline?: TimelineData, result?: SimulationResult) => {
-        if (!result?.searchData?.sources) return "Simulated";
-        const sourceCount = 
-          (result.searchData.sources.visa?.length || 0) +
-          (result.searchData.sources.housing?.length || 0) +
-          (result.searchData.sources.cost?.length || 0);
-        return sourceCount > 0 ? `${sourceCount} real-time sources` : "Simulated";
-      }
-    },
-    { 
-      label: "Key Phases", 
-      getValue: (timeline?: TimelineData) => 
-        timeline?.phases ? `${timeline.phases.length} phases` : "TBD"
     }
   ];
 
@@ -574,11 +586,17 @@ function ComparisonTable({
             const timeline = timelines[scenario.key];
             const result = results[scenario.key];
             const value = row.getValue(timeline, result);
+            const isExpanded = isCellExpanded(row.label, scenario.key);
+            const shouldShowExpandButton = value && typeof value === 'string' && value.length > 80 && value !== 'TBD';
+            const displayValue = shouldShowExpandButton && !isExpanded 
+              ? value.substring(0, 80) + "..." 
+              : value;
+            
 
             return (
-              <div key={scenario.key} className="p-4 border-r border-green-500/30 last:border-r-0 text-gray-300">
+              <div key={scenario.key} className="border-r border-green-500/30 last:border-r-0 text-gray-300">
                 {isLoading ? (
-                  <div className="flex items-center gap-2">
+                  <div className="p-4 flex items-center gap-2">
                     <span className="inline-flex gap-1">
                       {[...Array(3)].map((_, i) => (
                         <span
@@ -591,7 +609,34 @@ function ComparisonTable({
                     <span className="text-xs text-gray-500">Loading...</span>
                   </div>
                 ) : (
-                  <span className="text-sm">{value}</span>
+                  <div className="p-4">
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap break-words mb-2">
+                      {displayValue}
+                    </div>
+                    {shouldShowExpandButton && (
+                      <button
+                        onClick={() => toggleCell(row.label, scenario.key)}
+                        className="flex items-center gap-1 text-xs text-green-500 hover:text-green-400 transition-colors"
+                      >
+                        <svg
+                          className={`w-3 h-3 transition-transform ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                        {isExpanded ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             );

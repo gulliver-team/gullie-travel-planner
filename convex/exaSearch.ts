@@ -211,7 +211,7 @@ export const searchAndEnrichSimulation = action({
       ),
     }),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ searchData: any; enrichedInsights: any }> => {
     const searchData = await ctx.runAction(api.exaSearch.performRelocationSearch, {
       startCity: args.simulationData.start_city,
       destinationCity: args.simulationData.destination_city,

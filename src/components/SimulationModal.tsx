@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useAction } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 interface SimulationResult {
@@ -82,6 +82,10 @@ export function SimulationModal({
 
   const streamSimulation = useAction(api.simulations.streamSimulation);
   const generateTimeline = useAction(api.simulations.generateTimeline);
+  const createExaJob = useMutation(api.exaJobs.createJob);
+  const runExaJob = useAction(api.exaJobs.runJob);
+
+  const [exaJobIds, setExaJobIds] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -130,6 +134,7 @@ export function SimulationModal({
     setIsFormCollapsed(true);
     setResults({});
     setTimelines({});
+    setExaJobIds({});
 
     const budgetRange = formatBudgetRange();
 
@@ -140,9 +145,37 @@ export function SimulationModal({
     });
     setLoadingStates(initialLoadingStates);
 
+    // Helper: parse location into city,country
+    const parseLocation = (location: string) => {
+      const parts = location?.split(',').map((p) => p.trim()) || [];
+      if (parts.length >= 2) {
+        const country = parts[parts.length - 1];
+        const city = parts.slice(0, -1).join(', ');
+        return { city, country };
+      }
+      return { city: location || '', country: '' };
+    };
+    const origin = parseLocation(formData.start_city || '');
+    const destination = parseLocation(formData.destination_city || '');
+
     // Run all scenarios in parallel
     const promises = scenarios.map(async (scenario) => {
       try {
+        // Kick off Exa live job for this scenario
+        const jobId = await createExaJob({
+          originCity: origin.city,
+          originCountry: origin.country,
+          destinationCity: destination.city,
+          destinationCountry: destination.country,
+          budgetMin: formData.budget_min ? Number(formData.budget_min) : undefined,
+          budgetMax: formData.budget_max ? Number(formData.budget_max) : undefined,
+          moveMonth: formData.move_month || undefined,
+          context: formData.context || undefined,
+          scenario: scenario.key,
+        });
+        setExaJobIds((prev) => ({ ...prev, [scenario.key]: jobId as unknown as string }));
+        await runExaJob({ jobId: jobId as any });
+
         const result = await streamSimulation({
           start_city: formData.start_city,
           destination_city: formData.destination_city,
@@ -420,6 +453,12 @@ export function SimulationModal({
                 currentPhrases={currentPhrases}
               />
 
+              {/* Live Sources Panel */}
+              <div className="mt-8 space-y-4">
+                <h3 className="text-lg font-semibold text-gray-200">Live Sources</h3>
+                <LiveSourcesPanel scenarios={scenarios} jobIds={exaJobIds} />
+              </div>
+
 
             </div>
           </motion.div>
@@ -462,6 +501,107 @@ interface ComparisonTableProps {
   loadingStates: Record<string, boolean>;
   currentPhrases: Record<string, string>;
 }
+
+function LiveSourcesPanel({
+  scenarios,
+  jobIds,
+}: {
+  scenarios: { key: string; label: string }[];
+  jobIds: Record<string, string>;
+}) {
+  // Subscribe to up to 4 job docs
+  const cheapestJob = useQuery(
+    api.exaJobs.getJob,
+    jobIds["cheapest"] ? { jobId: jobIds["cheapest"] as any } : undefined
+  );
+  const fastestJob = useQuery(
+    api.exaJobs.getJob,
+    jobIds["fastest"] ? { jobId: jobIds["fastest"] as any } : undefined
+  );
+  const balancedJob = useQuery(
+    api.exaJobs.getJob,
+    jobIds["balanced"] ? { jobId: jobIds["balanced"] as any } : undefined
+  );
+  const luxuryJob = useQuery(
+    api.exaJobs.getJob,
+    jobIds["luxury"] ? { jobId: jobIds["luxury"] as any } : undefined
+  );
+
+  const jobMap: Record<string, any> = {
+    cheapest: cheapestJob,
+    fastest: fastestJob,
+    balanced: balancedJob,
+    luxury: luxuryJob,
+  };
+
+  const categories = [
+    { key: "visaRequirements", label: "Visa" },
+    { key: "housingMarket", label: "Housing" },
+    { key: "costOfLiving", label: "Cost of Living" },
+    { key: "transportOptions", label: "Transport" },
+  ] as const;
+
+  const hasAny = Object.values(jobIds).some(Boolean);
+  if (!hasAny) return null;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {scenarios.map((s) => {
+        const job = jobMap[s.key];
+        const status = job?.status as string | undefined;
+        const results = (job?.results || {}) as Record<string, any[]>;
+
+        return (
+          <div key={s.key} className="border border-green-500/30 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-green-400 font-semibold">{s.label} — Live Sources</h4>
+              <span className="text-xs text-gray-500">
+                {status ? status.toUpperCase() : job ? "" : "PENDING"}
+              </span>
+            </div>
+            <div className="space-y-4">
+              {categories.map((c) => {
+                const items = results[c.key] || [];
+                return (
+                  <div key={c.key}>
+                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+                      {c.label}
+                      <span className="ml-2 text-gray-600">{items.length} sources</span>
+                    </div>
+                    {items.length === 0 ? (
+                      <div className="text-xs text-gray-600">Fetching...</div>
+                    ) : (
+                      <ul className="space-y-2">
+                        {items.slice(0, 3).map((r: any, i: number) => (
+                          <li key={i} className="text-sm">
+                            <a
+                              href={r.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-green-400 hover:underline"
+                            >
+                              {r.title || r.url}
+                            </a>
+                            {r.text || r.snippet ? (
+                              <p className="text-xs text-gray-500 line-clamp-2">
+                                {(r.snippet || r.text || "").slice(0, 140)}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 
 function ComparisonTable({ 
   scenarios, 

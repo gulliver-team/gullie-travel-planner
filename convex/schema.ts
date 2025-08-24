@@ -10,6 +10,7 @@ import { rental } from "./schemas/rental";
 import { document } from "./schemas/document";
 import { subscriptionSchema, checkoutSchema } from "./schemas/subscription";
 import { conversation } from "./schemas/conversation";
+import { exaJob } from "./schemas/exaJob";
 
 export default defineSchema({
   messages: defineTable(message).vectorIndex("by_embedding", {
@@ -61,4 +62,7 @@ export default defineSchema({
       dimensions: 1536,
       vectorField: "embedding",
     }),
+  
+  // Exa live search jobs (stream raw search results to UI)
+  exa_jobs: defineTable(exaJob),
 });
